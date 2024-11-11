@@ -18,7 +18,7 @@ std::vector<Armor> OpenvinoInfer::infer(cv::Mat &img, int detect_color){
     cv::resize(img,img,cv::Size(new_width,new_height),0,0,cv::INTER_AREA);
     int d_width=640-new_width;
     int d_height=640-new_height;
-    cv::copyMakeBorder(img,img,0,d_width,0,d_height,cv::BORDER_ISOLATED);
+    cv::copyMakeBorder(img,img,0,d_height,0,d_width,cv::BORDER_ISOLATED);
     //原图像在右上角，后四个参数分别为top,bottom,left,right
 
     // Step 5. Create tensor from image
@@ -105,14 +105,14 @@ std::vector<Armor> OpenvinoInfer::infer(cv::Mat &img, int detect_color){
         if(_class_id==0) obj.number="0";
 
 
-        obj.landmarks[0]=output_buffer.at<float>(i, 0) /640.0 *raw_size.width;
-        obj.landmarks[1]=output_buffer.at<float>(i, 1) /640.0 *raw_size.height;
-        obj.landmarks[2]=output_buffer.at<float>(i, 2) /640.0 *raw_size.width;
-        obj.landmarks[3]=output_buffer.at<float>(i, 3) /640.0 *raw_size.height;
-        obj.landmarks[4]=output_buffer.at<float>(i, 4) /640.0 *raw_size.width;
-        obj.landmarks[5]=output_buffer.at<float>(i, 5) /640.0 *raw_size.height;
-        obj.landmarks[6]=output_buffer.at<float>(i, 6) /640.0 *raw_size.width;
-        obj.landmarks[7]=output_buffer.at<float>(i, 7) /640.0 *raw_size.height;
+        obj.landmarks[0]=output_buffer.at<float>(i, 0) /new_width *raw_size.width;
+        obj.landmarks[1]=output_buffer.at<float>(i, 1) /new_height *raw_size.height;
+        obj.landmarks[2]=output_buffer.at<float>(i, 2) /new_width *raw_size.width;
+        obj.landmarks[3]=output_buffer.at<float>(i, 3) /new_height *raw_size.height;
+        obj.landmarks[4]=output_buffer.at<float>(i, 4) /new_width *raw_size.width;
+        obj.landmarks[5]=output_buffer.at<float>(i, 5) /new_height*raw_size.height;
+        obj.landmarks[6]=output_buffer.at<float>(i, 6) /new_width *raw_size.width;
+        obj.landmarks[7]=output_buffer.at<float>(i, 7) /new_height *raw_size.height;
         obj.length = cv::norm(cv::Point2f(obj.landmarks[0] - obj.landmarks[6])-cv::Point2f(obj.landmarks[1]-obj.landmarks[7]));
         obj.width = cv::norm(cv::Point2f(obj.landmarks[0] - obj.landmarks[2])-cv::Point2f(obj.landmarks[1]-obj.landmarks[3]));
         obj.ratio = obj.length / obj.width;
