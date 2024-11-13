@@ -1,0 +1,62 @@
+/camera_node:
+  ros__parameters:
+    camera_info_url: package://rm_vision_bringup/config/camera_info.yaml
+    exposure_time:   1500
+    gain: 16.0
+
+/serial_driver:
+  ros__parameters:
+    timestamp_offset: 0.01
+    # device_name: /dev/stm32-usb-ttl
+    device_name: /dev/ttyACM0
+    baud_rate: 115200
+    flow_control: none
+    parity: none
+    stop_bits: "1"
+    self_rotation: 0
+    
+
+/armor_detector:
+  ros__parameters:
+    debug: true
+
+    detect_color: 0
+    binary_thres: 70
+
+    light.min_ratio: 0.09
+    armor.min_light_ratio: 0.8
+
+    classifier_threshold: 0.8
+    ignore_classes: ["negative"]
+
+    # detect_color_1: 0
+    # binary_thres_1: 70
+
+    # light.min_ratio_1: 0.1
+    # armor.min_light_ratio_1: 0.8
+
+    # classifier_threshold_1: 0.8
+    # ignore_classes_1: ["negative"]
+
+
+/armor_tracker:
+  ros__parameters:
+    target_frame: base_link
+    max_armor_distance: 10.0
+
+    ekf:
+      sigma2_q_xyz: 0.1
+      sigma2_q_yaw: 10.0
+      sigma2_q_r: 80.0
+
+      r_xyz_factor: 8e-5
+      r_yaw: 5e-3
+
+    tracker:
+      max_match_distance: 0.5
+      max_match_yaw_diff: 1.0
+      tracking_thres: 1
+      lost_time_thres: 0.6
+      pitch_diff: -0.3
+      yaw_diff: 0.0
+      spinning_diff: 0.08
