@@ -1,0 +1,75 @@
+%YAML 1.2
+color: red
+mode: small
+fps: 240
+image:
+  width: 1440
+  height: 1080
+detect:
+  brightness_threshold:
+    blue: 
+      arrow: 140
+      armor: 110
+    red:
+      arrow: 85
+      armor: 55
+  local_roi:
+    distance_ratio: 1.2
+    width: 170
+  armor_center_vertical_distance_threshold: 90
+  global_roi_length_ratio: 1.5
+  arrow:
+    lightline:
+      area:
+        min: 100
+        max: 1000
+      aspect_ratio_max: 5
+      num:
+        min: 4
+        max: 13
+    same_area_ratio_max: 5
+    aspect_ratio:
+      min: 2
+      max: 12
+    area_max: 8000
+  armor:
+    ellipse:
+      area:
+        min: 5000
+        max: 18000
+      circularity:
+        min: 0.6
+  centerR:
+    area:
+      min: 100
+      max: 2000
+    aspect_ratio_max: 2
+calculate:
+  bullet_speed:
+    min: 20
+    default: 28
+  tvec_c2g: [-80.00, 0.0, -150.00]
+  compansate:
+    time: 75
+    pitch: 0.0
+    yaw: 0.0
+  intrinsic_matrix: !!opencv-matrix #InstrinsicMatrix
+    rows: 3
+    cols: 3
+    dt: d
+    data: [2447.39254,    0.     ,  713.90204,
+            0.     , 2446.55667,  557.85896,
+            0.     ,    0.     ,    1.     ]
+  distortion: !!opencv-matrix #Distortion
+    rows: 5
+    cols: 1
+    dt: d  
+    data: [-0.084852, 0.090093, 0,  0.000160, 0.000762]
+  armor:
+    radius: 150
+  fit_data_size:
+    min: 20
+    max: 1200
+
+
+  

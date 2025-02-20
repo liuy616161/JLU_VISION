@@ -1,0 +1,14 @@
+std_msgs/Header header
+float32 imu_pitch
+float32 imu_yaw
+float32 pitch
+float32 yaw
+float32 distance
+bool is_switched
+bool is_target
+bool is_spinning
+bool is_spinning_switched
+bool is_shooting
+bool is_prediction
+geometry_msgs/Point meas_point_cam
+geometry_msgs/Point pred_point_cam
