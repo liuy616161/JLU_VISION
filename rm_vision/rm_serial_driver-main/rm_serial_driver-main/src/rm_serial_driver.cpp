@@ -34,51 +34,45 @@ namespace rm_serial_driver
     RCLCPP_INFO(get_logger(), "Start RMSerialDriver!");
 
     getParams();
-
-    // // Camera_choice Publisher
-    // camera_choice_publisher = this->create_publisher<std_msgs::msg::Int64>("camera_choice", 10);
-
     yaw_pub_ = this->create_publisher<std_msgs::msg::Float64>("/robo_yaw", 10);
     test_pub_ = this->create_publisher<std_msgs::msg::Float64>("/pitch_test", 10);
     pitch_calculate_ = this->create_publisher<std_msgs::msg::Float64>("/pitch_calculate_msg", 10);
     pitch_imu_ = this->create_publisher<std_msgs::msg::Float64>("/pitch_imu_msg", 10);
     sentry_decision_pub_ = this->create_publisher<std_msgs::msg::Int8>("sentry_decision",10);
     exposure_time_pub_ = this->create_publisher<std_msgs::msg::Int64>("exposure_time",10);
-
-    aim_et = this->declare_parameter("exposure_time_aim", 2800);
-    buff_et = this->declare_parameter("exposure_time_buff", 6800);
-    detect_color = this->declare_parameter("detect_color", 0);
+   
+    // 从参数服务器获取曝光时间参数
+    aim_et_ = this->declare_parameter("exposure_time_aim", 2800);
+    buff_et_ = this->declare_parameter("exposure_time_buff", 6800);
+    previous_exposure_time_ = this->declare_parameter("previous_exposure_time", 1000);
     // TF broadcaster
     timestamp_offset_ = this->declare_parameter("timestamp_offset", 0.0);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
-
-
-    // Create Publisher
+   // Create Publisher
     task_pub_ = this->create_publisher<std_msgs::msg::Int64>("/task_mode", 10);
     latency_pub_ = this->create_publisher<std_msgs::msg::Float64>("/latency", 10);
     marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("/aiming_point", 10);
-
+    previous_exposure_time_pub_ = this->create_publisher<std_msgs::msg::Int64>("/previous_exposure_time", 10);
     //new//////////////////////
-            // QoS
-        rclcpp::QoS qos(0);
-        qos.keep_last(1);
-        qos.reliable();
-        qos.durability();
-        // qos.best_effort()
-        // qos.transient_local();
-        // qos.durability_volatile();
+    //qos
+    rclcpp::QoS qos(0);
+    qos.keep_last(1);
+    qos.reliable();
+    qos.durability();
+    // qos.best_effort()
+    // qos.transient_local();
+    // qos.durability_volatile();
 
-        rmw_qos_profile_t rmw_qos(rmw_qos_profile_sensor_data);
-        rmw_qos.depth = 1;
+    rmw_qos_profile_t rmw_qos(rmw_qos_profile_sensor_data);
+    rmw_qos.depth = 1;
         
     serial_msg_pub_ = this->create_publisher<global_interface::msg::Serial>("/serial_msg", qos);
 
-    buff_info_sub_ = this->create_subscription<global_interface::msg::Gimbal>(
-            "/buff_processor/gimbal_msg",
-            qos,
-            std::bind(&RMSerialDriver::buffMsgCallback, this, std::placeholders::_1)
-        );
-     //new//////////////////////
+    buff_info_sub_ = this->create_subscription<global_interface::msg::Buff>(
+        "/buff_msg",
+        rclcpp::SensorDataQoS(),
+        std::bind(&RMSerialDriver::buffMsgCallback, this, std::placeholders::_1)
+    );
 
     // Detect parameter client
     detector_param_client_ = std::make_shared<rclcpp::AsyncParametersClient>(this, "armor_detector");
@@ -117,7 +111,20 @@ namespace rm_serial_driver
     target_sub_ = this->create_subscription<auto_aim_interfaces::msg::Target>(
         "/tracker/target", rclcpp::SensorDataQoS(),
         std::bind(&RMSerialDriver::sendData, this, std::placeholders::_1));
+
+    exposure_time_sub_ = this->create_subscription<std_msgs::msg::Int64>(
+      "exposure_time", 
+      qos, 
+      std::bind(&RMSerialDriver::exposureTimeCallback, this, std::placeholders::_1)
+  );
   }
+
+// 添加回调函数
+void RMSerialDriver::exposureTimeCallback(const std_msgs::msg::Int64::SharedPtr msg)
+{
+    previous_exposure_time_ = msg->data;
+}
+
 
   RMSerialDriver::~RMSerialDriver()
   {
@@ -163,14 +170,13 @@ namespace rm_serial_driver
           
           {
           
-        
+        /*
           if (!initial_set_param_color || packet.detect_color != previous_receive_color_)
           {
             setParam_color(rclcpp::Parameter("detect_color", packet.detect_color));
             previous_receive_color_ = packet.detect_color;
-            initial_set_param_color = true;
           }
-
+        */
           if (packet.reset_tracker)
           {
             resetTracker();
@@ -190,24 +196,35 @@ namespace rm_serial_driver
           yaw_msg.data = packet.yaw/57.2957/1000;
           sentry_decision_msg.data = packet.sentry_decision;
           
+
+          task.data = packet.task_mode;
+
+          // 根据任务模式设置不同的曝光时间
+          int64_t current_exposure_time;
+          if(task.data == 0) {  // 自瞄模式
+              current_exposure_time = aim_et_;
+          } else if(task.data == 1 || task.data == 2) {  // 能量机关模式
+              current_exposure_time = buff_et_;
+          }
           
-          if(packet.task_mode == 0){
-            task.data = 0;
-            exposure_time_msg.data = aim_et;
-          }
-          else if(packet.task_mode == 1){
-            task.data = 3;
-            exposure_time_msg.data = buff_et;
-          }
-           else if(packet.task_mode == 2){
-            task.data = 4;
-            exposure_time_msg.data = buff_et;
+          // 只有当曝光时间改变时才发布消息
+          if(current_exposure_time != previous_exposure_time_) {
+              exposure_time_msg.data = current_exposure_time;
+              exposure_time_pub_->publish(exposure_time_msg);
+              
+              // 发布前一个曝光时间
+              auto previous_msg = std_msgs::msg::Int64();
+              previous_msg.data = previous_exposure_time_;
+              previous_exposure_time_pub_->publish(previous_msg);
+              
+              // 更新前一个曝光时间
+              previous_exposure_time_ = current_exposure_time;
           }
 
           task_pub_->publish(task);
           yaw_pub_->publish(yaw_msg);
           sentry_decision_pub_->publish(sentry_decision_msg);
-          exposure_time_pub_->publish(exposure_time_msg);
+          //exposure_time_pub_->publish(exposure_time_msg);
 
           //std::cout <<packet.roll<<std::endl;
           //std::cout << -packet.pitch<<std::endl;
@@ -216,6 +233,9 @@ namespace rm_serial_driver
           t.transform.rotation = tf2::toMsg(q);
           tf_broadcaster_->sendTransform(t);
 
+
+
+          //std::cout<<"serial publish"<<std::endl;
           ////////////////
           global_interface::msg::Serial serial_msg;
                     serial_msg.header.frame_id = "serial";
@@ -324,26 +344,27 @@ void RMSerialDriver::sendData(const auto_aim_interfaces::msg::Target::SharedPtr 
  
 }
 
-void RMSerialDriver::buffMsgCallback(global_interface::msg::Gimbal::SharedPtr gimbal_msg)
+void RMSerialDriver::buffMsgCallback(global_interface::msg::Buff::SharedPtr buff_msg)
 {
-  if(task.data == 3 || task.data == 4)
+
+  std::cout<<"  buff_msg gettttttttt"<<std::endl;
+  if(task.data == 1 || task.data == 2)
   {
    SendPacket packet;
-   if(gimbal_msg->yaw == 0 ||  gimbal_msg->pitch == 0)
+   /*
+   if(buff_msg->predict_pitch == 0 ||  buff_msg->predict_yaw == 0)
    {
      packet.tracking = 0;
    }
    else{
     packet.tracking = 1;
    }
-
+    */
     packet.id = 1;
     packet.armors_num = 1;
-    packet.yaw = (-(gimbal_msg->yaw) + imu_yaw/1000) * 1000;
-    std::cout<<"gimbal_msg_yaw:"<<gimbal_msg->yaw<<"     imu_yaw:"<<imu_yaw/1000<<std::endl;
+    packet.yaw = (buff_msg->predict_yaw) * 1000;
     std::cout<<"packet.yaw"<<packet.yaw/1000<<std::endl;
-    packet.pitch = ((gimbal_msg->pitch  + imu_pitch/1000) ) * 1000;
-    std::cout<<"gimbal_msg_pitch:"<<gimbal_msg->pitch<<"     imu_pitch:"<<imu_pitch/1000<<std::endl;
+    packet.pitch = (buff_msg->predict_pitch) * 1000;
     std::cout<<"packet.pitch"<<packet.pitch/1000<<std::endl;
     packet.fire = 1;
     packet.v_yaw = 1;
@@ -361,6 +382,7 @@ void RMSerialDriver::buffMsgCallback(global_interface::msg::Gimbal::SharedPtr gi
 
     std::vector<uint8_t> data = toVector(packet);
     serial_driver_->port()->send(data);
+    std::cout<<"send finish"<<std::endl;
   }
   
 }
@@ -372,7 +394,6 @@ void RMSerialDriver::getParams()
   using StopBits = drivers::serial_driver::StopBits;
 
   uint32_t baud_rate{};
-  uint8_t detect_color{};
   auto fc = FlowControl::NONE;
   auto pt = Parity::NONE;
   auto sb = StopBits::ONE;
@@ -396,8 +417,6 @@ void RMSerialDriver::getParams()
     RCLCPP_ERROR(get_logger(), "The baud_rate provided was invalid");
     throw ex;
   }
-
-
 
   try
   {

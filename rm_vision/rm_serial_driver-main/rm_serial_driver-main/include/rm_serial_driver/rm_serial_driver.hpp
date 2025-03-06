@@ -27,6 +27,7 @@
 #include "auto_aim_interfaces/msg/target.hpp"
 #include "global_interface/msg/serial.hpp"
 #include "global_interface/msg/gimbal.hpp"
+#include "global_interface/msg/buff.hpp"
 
 namespace rm_serial_driver
 {
@@ -50,7 +51,7 @@ private:
 
   void resetTracker();
 
-  void buffMsgCallback(global_interface::msg::Gimbal::SharedPtr gimbal_msg);
+  void buffMsgCallback(global_interface::msg::Buff::SharedPtr buff_msg);
 
   // Serial port
   std::unique_ptr<IoContext> owned_ctx_;
@@ -95,23 +96,29 @@ private:
   std_msgs::msg::Float64 pitch_test;
   std_msgs::msg::Float64 pitch_calculate_msg;
   std_msgs::msg::Float64 pitch_imu_msg;
+  
+  
+  rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr exposure_time_pub_;
   std_msgs::msg::Int64 exposure_time_msg;// aim and buff are not the same exposure time
-
-  int aim_et;
-  int buff_et;
-  int detect_color;
+  int64_t aim_et_;
+  int64_t buff_et_;
+  int64_t previous_exposure_time_;
+  rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr exposure_time_sub_;
+  void exposureTimeCallback(const std_msgs::msg::Int64::SharedPtr msg);
+  rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr previous_exposure_time_pub_;
+  std_msgs::msg::Int64::SharedPtr previous_exposure_time_msg_;
+  
 
     // Task message
   rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr task_pub_;
   rclcpp::Publisher<global_interface::msg::Serial>::SharedPtr serial_msg_pub_;
 
-  rclcpp::Subscription<global_interface::msg::Gimbal>::SharedPtr buff_info_sub_;
-  
+  rclcpp::Subscription<global_interface::msg::Buff>::SharedPtr buff_info_sub_;
+  rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr task_sub_;
 
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr test_pub_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pitch_calculate_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pitch_imu_;
-  rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr exposure_time_pub_;
 
   // std_msgs::msg::Float64 test_msg;
 
