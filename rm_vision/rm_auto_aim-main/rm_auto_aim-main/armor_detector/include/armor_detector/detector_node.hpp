@@ -39,6 +39,7 @@ private:
 
   std::unique_ptr<OpenvinoInfer> initInfer();
 
+  std::vector<Armor> detectArmors(const sensor_msgs::msg::Image::ConstSharedPtr & img_msg);
 
   void createDebugPublishers();
   void destroyDebugPublishers();

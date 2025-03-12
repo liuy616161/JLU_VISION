@@ -166,7 +166,7 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
   float static_x = 0.00;
   float static_z = 0.00;
   // 线性预测
-  float algorithm_time = 10; //可以通过latency查看
+  float algorithm_time = 45; //可以通过latency查看
   float respond_time = 70 ;   //可以通过打小陀螺测试得到
   if(fabsf(v_yaw) > 4){
       //对于高速旋转的目标，采取秒准中心的策略，respond_time 理应更少

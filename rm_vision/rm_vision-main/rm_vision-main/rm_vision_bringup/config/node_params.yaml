@@ -1,8 +1,8 @@
 /camera_node:
   ros__parameters:
     camera_info_url: package://rm_vision_bringup/config/camera_info.yaml
-    exposure_time: 1800
-    gain: 16.0
+    exposure_time: 1000
+    gain: 20.0
 
 /serial_driver:
   ros__parameters:
@@ -20,13 +20,6 @@
     debug: true
 
     detect_color: 0
-    binary_thres: 80
-
-    light.min_ratio: 0.1
-    armor.min_light_ratio: 0.8
-
-    classifier_threshold: 0.8
-    ignore_classes: ["negative"]
 
 /armor_tracker:
   ros__parameters:
@@ -34,18 +27,18 @@
     max_armor_distance: 10.0
 
     ekf:
-      sigma2_q_xyz: 0.05
-      sigma2_q_yaw: 10.0
-      sigma2_q_r: 100.0
-
-      r_xyz_factor: 5e-5
-      r_yaw: 6e-3
-
-    tracker:
+      sigma2_q_xyz: 0.08
+      sigma2_q_yaw: 8
+      sigma2_q_r: 80.0
+      
+      r_xyz_factor: 8e-5
+      r_yaw: 9e-3
+    
+    ros_parameters:
       max_match_distance: 0.5
       max_match_yaw_diff: 1.0
       tracking_thres: 3
       lost_time_thres: 1.0
-      pitch_diff: 1.2
-      yaw_diff: 1.0
+      pitch_diff: 0
+      yaw_diff:  0
       spinning_diff: 0.2

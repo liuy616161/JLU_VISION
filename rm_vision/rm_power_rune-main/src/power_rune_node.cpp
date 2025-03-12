@@ -88,12 +88,6 @@ namespace power_rune{
    
     void PowerRuneNode::imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr img_msg)
     {   
-
-
-        auto start1=this->now();
-        auto lll1 = (start1 - img_msg->header.stamp).seconds() * 1000;
-        std::cout << "powerrune_callback time: " << lll1 << " ms" << std::endl;
-        
         if(!is_aim_task_){
             return;
         }   

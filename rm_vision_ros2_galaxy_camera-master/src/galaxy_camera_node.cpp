@@ -263,18 +263,12 @@ private:
   rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr exposure_sub_;
   
   void exposureCallback(const std_msgs::msg::Int64::SharedPtr msg ){
-      last_et = et;
-      et = msg->data;
-      if(last_et != et)
-      {
-        GX_STATUS status = GXSetFloat(camera_handle_,GX_FLOAT_EXPOSURE_TIME ,et);
-        if (!GX_SUCCESS(status)) {
+      GX_STATUS status = GXSetFloat(camera_handle_,GX_FLOAT_EXPOSURE_TIME ,msg->data);
+      if (!GX_SUCCESS(status)) {
             RCLCPP_ERROR(this->get_logger(),"Failed to change exposure time!");
           }else {
             RCLCPP_INFO(this->get_logger(),"Succeeded to change exposure time!");
           }
-      }
-      
   }
 
   sensor_msgs::msg::Image image_msg_;
@@ -291,8 +285,6 @@ private:
   std::unique_ptr<camera_info_manager::CameraInfoManager> camera_info_manager_;
   sensor_msgs::msg::CameraInfo camera_info_msg_;
 
-  int et = 2800;
-  int last_et =2800;
   int fail_conut_ = 0;
   std::thread capture_thread_;
 

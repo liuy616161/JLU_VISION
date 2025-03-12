@@ -9,7 +9,7 @@ namespace power_rune {
  * 2: 在 1 的基础上显示灯条、roi
  * 3: 在 2 的基础上显示二值化图片
  */
-#define SHOW_IMAGE 0
+#define SHOW_IMAGE 3
 
 #define CONSOLE_OUTPUT 0
 

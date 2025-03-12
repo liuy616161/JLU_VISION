@@ -94,7 +94,7 @@ ArmorDetectorNode::ArmorDetectorNode(const rclcpp::NodeOptions & options)
     });
 
   img_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
-    "/image_raw", rclcpp::SensorDataQoS(rclcpp::KeepLast(1)),
+    "/image_raw", rclcpp::SensorDataQoS(),
     std::bind(&ArmorDetectorNode::imageCallback, this, std::placeholders::_1));
 
   task_sub_ = this->create_subscription<std_msgs::msg::Int64>(
@@ -118,59 +118,14 @@ void ArmorDetectorNode::taskCallback(const std_msgs::msg::Int64::SharedPtr task_
 
 void ArmorDetectorNode::imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr img_msg)
 {
-
-  auto start=this->now();
-  auto lll = (start - img_msg->header.stamp).seconds() * 1000;
-  std::cout << "callback time: " << lll << " ms" << std::endl;
-  
-  auto pass_start_time=std::chrono::steady_clock::now();
   if(is_aim_task_)
   {
-
-
-  auto start_convert=this->now();
-  // Convert ROS img to cv::Mat
-  auto img = cv_bridge::toCvShare(img_msg, "bgr8")->image;
   
-  //int detect_color=get_parameter("detect_color").as_int();
-
-
-  std::cout<<"width:"<<img.rows<<std::endl;
-
-  
-  int detect_color=1;
-
-  auto inferstart_time=this->now();
-
-  auto armors=infer_->infer(img,detect_color);
-
-  auto final_time = this->now();
-
-  auto infer_latency=(final_time-inferstart_time).seconds()*1000;
-  auto convert_time=(inferstart_time-start_convert).seconds()*1000;
-  std::cout<<"convert cost time:"<<convert_time<<std::endl;
-  std::cout<<"infer cost time:"<<infer_latency<<std::endl;
-  auto latency = (final_time - img_msg->header.stamp).seconds() * 1000;
-  RCLCPP_DEBUG_STREAM(this->get_logger(), "Latency: " << latency << "ms");
-
-  infer_->drawResults(img);
-
-  std::stringstream latency_ss;
-    latency_ss << "Latency: " << std::fixed << std::setprecision(2) << latency << "ms";
-    auto latency_s = latency_ss.str();
-    cv::putText(
-      img, latency_s, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 255, 0), 2);
-    result_img_pub_.publish(cv_bridge::CvImage(img_msg->header, "bgr8", img).toImageMsg());
-
-  
-  auto over_pass=std::chrono::steady_clock::now();
-  auto pass_t=std::chrono::duration_cast<std::chrono::milliseconds>(over_pass-pass_start_time);
-  
-    std::cout<<"pass_t:"<<std::fixed << std::setprecision(5) << pass_t.count() << "ms"<<std::endl;
-
-
+  auto armors = detectArmors(img_msg);
+      // std::cout<<"_size:"<<armors.size()<<std::endl;
   if(armors.empty()){
       RCLCPP_INFO(this->get_logger(), "no armors!");
+      std::cout<<11<<std::endl;///////11
   }
   if (pnp_solver_ != nullptr && is_aim_task_ ) {
     armors_msg_.header = armor_marker_.header = text_marker_.header = img_msg->header;
@@ -238,6 +193,40 @@ std::unique_ptr<OpenvinoInfer> ArmorDetectorNode::initInfer(){
   auto pkg_path = ament_index_cpp::get_package_share_directory("armor_detector");
   auto infer=std::make_unique<OpenvinoInfer>((pkg_path + "/model/best_06_02.xml"), (pkg_path + "/model/best_06_02.bin"));
   return infer;
+}
+
+
+
+
+std::vector<Armor> ArmorDetectorNode::detectArmors(
+  const sensor_msgs::msg::Image::ConstSharedPtr & img_msg)
+{
+  // Convert ROS img to cv::Mat
+  auto img = cv_bridge::toCvShare(img_msg, "bgr8")->image;
+  
+  //int detect_color=get_parameter("detect_color").as_int();
+
+  int detect_color=1;
+
+  auto armors=infer_->infer(img,detect_color);
+
+
+
+
+  auto final_time = this->now();
+  auto latency = (final_time - img_msg->header.stamp).seconds() * 1000;
+  RCLCPP_DEBUG_STREAM(this->get_logger(), "Latency: " << latency << "ms");
+
+  infer_->drawResults(img);
+
+  std::stringstream latency_ss;
+    latency_ss << "Latency: " << std::fixed << std::setprecision(2) << latency << "ms";
+    auto latency_s = latency_ss.str();
+    cv::putText(
+      img, latency_s, cv::Point(10, 30), cv::FONT_HERSHEY_SIMPLEX, 1.0, cv::Scalar(0, 255, 0), 2);
+    result_img_pub_.publish(cv_bridge::CvImage(img_msg->header, "bgr8", img).toImageMsg());
+
+  return armors;
 }
 
 
