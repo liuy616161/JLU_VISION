@@ -3,7 +3,7 @@
 <robot name="rm_gimbal" xmlns:xacro="http://ros.org/wiki/xacro">
 
   <xacro:arg name="odom2gimbal" default="0 0 0" />
-  <xacro:arg name="giambal2camera" default="0.095 0.087 0.170 " />
+  <xacro:arg name="giambal2camera" default="0.10 0 0.08 " />
   <!-- <xacro:arg name="giambal2camera" default="0.1 -0.06 0.00 " /> -->
   <xacro:arg name="rpy" default="0 0 0" />
 
@@ -28,7 +28,7 @@
   <link name="camera_link" />
 
   <joint name="camera_optical_joint" type="fixed">
-    <!-- <origin xyz="0 0 0" rpy="-1.579522 0 ${-pi/2}" /> -->
+    <!-- <origin xyz="0 0 0" rpy="-1.544522 0 ${-pi/2}" /> -->
     <origin xyz="0 0 0" rpy="${-pi/2} 0 ${-pi/2}" />
     <parent link="camera_link" />
     <child link="camera_optical_frame" />

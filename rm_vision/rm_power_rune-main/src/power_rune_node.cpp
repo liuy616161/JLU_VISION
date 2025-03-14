@@ -41,7 +41,7 @@ namespace power_rune{
         });
 
         img_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
-            "/image_raw", rclcpp::SensorDataQoS(),
+            "/image_raw", rclcpp::SensorDataQoS(rclcpp::KeepLast(1)),
             std::bind(&PowerRuneNode::imageCallback, this, std::placeholders::_1));
 
            task_sub_ = this->create_subscription<std_msgs::msg::Int64>(
@@ -108,7 +108,7 @@ namespace power_rune{
         buff_msg.angletofirst = power_rune_->m_calculator.getAngleRel();
         buff_msg.angletolast = power_rune_->m_calculator.getAngleLast();
         buff_msg.angle=buff_msg.angletofirst-buff_msg.angletolast;
-        buff_msg.predict_pitch = -pitch_yaw.first;
+        buff_msg.predict_pitch = pitch_yaw.first;
         buff_msg.predict_yaw = pitch_yaw.second;
         //buff_msg.mode = Param::MODE;
         //buff_msg.buff_angle = power_rune_->m_calculator.getBuffAngle();
@@ -160,6 +160,8 @@ namespace power_rune{
             pitch_ = std::copysign(M_PI / 2, sinp); // 使用90度，如果超出范围
         else
             pitch_ = std::asin(sinp);
+
+        pitch_=-pitch_;
 
         // yaw (z-axis rotation)
         double siny_cosp = 2.0 * (w * z + x * y);
