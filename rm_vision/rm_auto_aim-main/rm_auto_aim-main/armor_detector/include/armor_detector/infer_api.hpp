@@ -1,6 +1,5 @@
-//
-// Created by nuc on 23-5-7.
-//
+// Copyright 2023 RM Vision Team
+// Licensed under the MIT License.
 
 #ifndef OPENVINO_TEST_OPENVINOINFER_H
 #define OPENVINO_TEST_OPENVINOINFER_H
@@ -8,41 +7,27 @@
 #include <opencv2/opencv.hpp>
 #include <openvino/openvino.hpp>
 #include <vector>
-#include"armor.hpp"
-//��ǰ�ȸ���ģ���޸ĺ�Ҫ�޸ĵĵط�
+#include <Eigen/Dense>
+#include "armor_detector/armor.hpp"
 
-#define mean
-namespace rm_auto_aim{
+namespace rm_auto_aim {
 
-    struct GridAndStride
-    {
-        int grid0;
-        int grid1;
-        int stride;
-    };
+struct GridAndStride {
+    int grid0;
+    int grid1;
+    int stride;
+};
 
-    enum ArmorTypes
-    {
-        BLUE_SMALL,
-        BLUE_BIG,
-        RED_SMALL,
-        RED_BIG,
-        GRAY_SMALL,
-        GRAY_BIG,
-        PURPLE_SMALL,
-        PURPLE_BIG
-    };
-
-// struct ArmorObject
-// {
-//     int area;
-//     cv::Point2f apex[4];
-//     cv::Rect_<float> rect;
-//     int cls;
-//     int color;
-//     float prob;
-//     std::vector<cv::Point2f> pts;
-// };
+enum ArmorColors {
+    BLUE_SMALL,
+    BLUE_BIG,
+    RED_SMALL,
+    RED_BIG,
+    GRAY_SMALL,
+    GRAY_BIG,
+    PURPLE_SMALL,
+    PURPLE_BIG
+};
 
 class OpenvinoInfer {
 public:
@@ -51,62 +36,70 @@ public:
     const int IMAGE_WIDTH = 640;
     double ans;
     std::vector<double> ious;
-    std::vector<Armor> tmp_objects;    // ��ʱĿ�ꣿ
+    std::vector<Armor> tmp_objects;
+
     std::shared_ptr<ov::Model> model;
     ov::Core core;
-    // ov::preprocess::PrePostProcessor *ppp;
     ov::CompiledModel compiled_model;
     ov::Shape input_shape;
     ov::InferRequest infer_request;
     ov::Tensor input_tensor;
     cv::Size raw_size;
-    // std::vector<ArmorObject> objects
+    Eigen::Matrix<float, 3, 3> transform_matrix; // 坐标变换矩阵
+
+    // 检测相关参数
+    static constexpr int INPUT_W = 416;
+    static constexpr int INPUT_H = 416;
+    static constexpr int NUM_CLASSES = 8;
+    static constexpr int NUM_COLORS = 8;
+    static constexpr float BBOX_CONF_THRESH = 0.75; // 提高置信度阈值
+    static constexpr float NMS_THRESH = 0.3;
+    static constexpr float MERGE_CONF_ERROR = 0.15;
+    static constexpr float MERGE_MIN_IOU = 0.9;
 
     void drawResults(cv::Mat &img);
 
-    OpenvinoInfer(){}
-    std::vector<Armor> infer(cv::Mat &img,int detect_color);
-    OpenvinoInfer(std::string model_path_xml, std::string model_path_bin){
+    OpenvinoInfer() {}
+    std::vector<Armor> infer(cv::Mat &img, int detect_color);
+    
+    OpenvinoInfer(std::string model_path_xml, std::string model_path_bin) {
         std::cout << "Start initialize model..." << std::endl;
 
-        // Setting Configuration Values
+        // 设置配置
         core.set_property("CPU", ov::enable_profiling(true));
     
-        //Step 1.Create openvino runtime core
+        // 步骤1：创建openvino运行时核心
         model = core.read_model(model_path_xml, model_path_bin);
-        // model = core.import_model();
 
-        // Preprocessing
-        ov::preprocess::PrePostProcessor ppp(model);    //PrePostProcessor ������������������Ԥ�����ͺ������裬����׼��ģ�͵��������ݺʹ�����������
-        ppp.input().tensor().set_element_type(ov::element::f32);  // ppp.input() ��ȡģ�͵����벿�֡�tensor() ��������������������Ϣ��set_element_type(ov::element::f32) ����������������������Ϊ 32 λ��������f32����
-        // ppp.input().tensor().set_element_type(ov::element::u8);    // �޷��Ű�λ����
+        // 预处理
+        ov::preprocess::PrePostProcessor ppp(model);
+        ppp.input().tensor().set_element_type(ov::element::f32);
 
-        // Set output precision           // �����������
+        // 设置输出精度
         ppp.output().tensor().set_element_type(ov::element::f32);
-        // ppp.output().tensor().set_element_type(ov::element::u8);
         
-        //��Ԥ��������ԭʼģ��
+        // 将预处理集成到原始模型
         ppp.build(); 
 
-        //Step 2. Compile the model    ����ģ��
-        compiled_model = core.compile_model(     // �����ѧϰģ�ͱ���ɿ�����ָ��Ӳ����ִ�еĸ�ʽ��
+        // 步骤2：编译模型
+        compiled_model = core.compile_model(
             model,
             "CPU",
             ov::hint::performance_mode(ov::hint::PerformanceMode::LATENCY)
         );
 
+        // 步骤3：创建推理请求
         infer_request = compiled_model.create_infer_request();
     }
     
     double sigmoid(double x) {
-        if(x>0)
+        if(x > 0)
             return 1.0 / (1.0 + exp(-x));
         else
             return exp(x) / (1.0 + exp(x));
     }
 
-        double cal_iou(const cv::Rect& r1, const cv::Rect& r2)
-    {
+    double cal_iou(const cv::Rect& r1, const cv::Rect& r2) {
         float x_left = std::fmax(r1.x, r2.x);
         float y_top = std::fmax(r1.y, r2.y); 
         float x_right = std::fmin(r1.x + r1.width, r2.x + r2.width);
@@ -122,18 +115,33 @@ public:
         return in_area / un_area;
     }
 
-    double meaning(float x, int len){
+    double meaning(float x, int len) {
         if(len == 0) ans = x;
-        else{
+        else {
             ans = (len * ans + x) / (len+1);
         }
         return ans;
     }
 
-    ~OpenvinoInfer(){
-        // delete ppp;
-    }
+    // 新增：图像预处理函数
+    cv::Mat scaledResize(cv::Mat& img);
+    
+    // 新增：检测关键点
+    void generateProposals(std::vector<GridAndStride>& grid_strides, const float* feat_ptr,
+                          float prob_threshold, std::vector<Armor>& proposals);
+    
+    // 新增：非极大值抑制与合并
+    void nmsMergeBoxes(std::vector<Armor>& proposals, std::vector<Armor>& objects);
+    
+    // 新增：验证几何约束
+    bool validateGeometry(const Armor& armor);
+    
+    // 新增：规整化关键点
+    void regularizeKeypoints(Armor& armor);
+
+    ~OpenvinoInfer() {}
 };
+
 }
 
 #endif //OPENVINO_TEST_OPENVINOINFER_H
