@@ -224,7 +224,7 @@ void OpenvinoInfer::nmsMergeBoxes(std::vector<Armor>& proposals, std::vector<Arm
             }
             
             // 更新装甲板属性
-            regularizeKeypoints(objects[i]);
+            //regularizeKeypoints(objects[i]);
         }
         
         // 应用几何约束
