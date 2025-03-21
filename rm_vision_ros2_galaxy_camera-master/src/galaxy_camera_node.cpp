@@ -60,6 +60,15 @@ public:
     GXGetInt(camera_handle_, GX_INT_HEIGHT_MAX, &img_info_.nHeightMax);
     image_msg_.data.reserve(img_info_.nHeightMax * img_info_.nWidthMax * 3);
 
+        // 在GXGetInt获取相机信息后添加
+    RCLCPP_INFO(
+      this->get_logger(), 
+      "Camera resolution - Current: %ld x %ld, Maximum: %ld x %ld", 
+      img_info_.nWidthValue, img_info_.nHeightValue,
+      img_info_.nWidthMax, img_info_.nHeightMax
+    );
+
+
     bool use_sensor_data_qos = this->declare_parameter("use_sensor_data_qos", true);
     auto qos = use_sensor_data_qos ? rmw_qos_profile_sensor_data : rmw_qos_profile_default;
     // auto qos =  rmw_qos_profile_sensor_data;

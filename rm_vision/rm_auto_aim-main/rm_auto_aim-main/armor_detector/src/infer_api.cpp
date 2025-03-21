@@ -1,7 +1,7 @@
 // Copyright 2023 RM Vision Team
 // Licensed under the MIT License.
 
-#include "../../include/inference/infer_api.hpp"
+#include "../include/armor_detector/infer_api.hpp"
 #include <algorithm>
 #include <chrono>
 #include <cmath>
@@ -23,7 +23,7 @@ bool OpenvinoInfer::initModel(std::string model_path_xml, std::string model_path
     // 性能优化配置
     core.set_property("CPU", ov::enable_profiling(false)); // 禁用性能分析以加快速度
     core.set_property("CPU", ov::inference_num_threads(perf_config.inference_threads));
-    core.set_property("CPU", ov::enable_cpu_memory_pool()); // 启用内存池
+    // 注意：移除了不兼容的 enable_cpu_memory_pool API
 
     // 读取模型
     model = core.read_model(model_path_xml, model_path_bin);
@@ -44,13 +44,11 @@ bool OpenvinoInfer::initModel(std::string model_path_xml, std::string model_path
         ov::hint::performance_mode(perf_mode)
     );
 
-    // 创建推理请求
-    infer_request = compiled_model.create_infer_request();
+   
+// 在初始化函数中
+infer_requests_[0] = compiled_model.create_infer_request();
+infer_requests_[1] = compiled_model.create_infer_request();
     
-    // 异步推理请求
-    if (perf_config.use_async_inference) {
-        async_infer_request = compiled_model.create_infer_request();
-    }
     
     // 预分配缓冲区
     points_buffer.reserve(50);  // 预分配足够的空间
@@ -112,8 +110,7 @@ void OpenvinoInfer::generateProposals(const std::vector<GridAndStride>& grid_str
     
     const int num_anchors = grid_strides.size();
 
-    // 使用OpenMP并行处理锚点
-    #pragma omp parallel for num_threads(2) if(num_anchors > 1000)
+    // 串行处理所有锚点 (移除了OpenMP并行)
     for (int anchor_idx = 0; anchor_idx < num_anchors; anchor_idx++) {
         const int grid0 = grid_strides[anchor_idx].grid0;
         const int grid1 = grid_strides[anchor_idx].grid1;
@@ -134,84 +131,80 @@ void OpenvinoInfer::generateProposals(const std::vector<GridAndStride>& grid_str
             continue;
         }
         
-        // 使用thread_local来避免线程之间的竞争
-        #pragma omp critical
-        {
-            // 创建对象
-            Armor obj;
-            
-            obj.prob = box_objectness;
-            
-            // 设置颜色和数字
-            if(box_color == RED_SMALL || box_color == RED_BIG) obj.color = RED;
-            if(box_color == BLUE_SMALL || box_color == BLUE_BIG) obj.color = BLUE;
-            
-            if(box_class==0) obj.number="G";
-            if(box_class==1) obj.number="1";
-            if(box_class==2) obj.number="2";
-            if(box_class==3) obj.number="3";
-            if(box_class==4) obj.number="4";
-            if(box_class==5) obj.number="5";
-            if(box_class==7) obj.number="7";
-            
-            // 提取关键点
-            float x_1 = (feat_ptr[basic_pos + 0] + grid0) * stride;
-            float y_1 = (feat_ptr[basic_pos + 1] + grid1) * stride;
-            float x_2 = (feat_ptr[basic_pos + 2] + grid0) * stride;
-            float y_2 = (feat_ptr[basic_pos + 3] + grid1) * stride;
-            float x_3 = (feat_ptr[basic_pos + 4] + grid0) * stride;
-            float y_3 = (feat_ptr[basic_pos + 5] + grid1) * stride;
-            float x_4 = (feat_ptr[basic_pos + 6] + grid0) * stride;
-            float y_4 = (feat_ptr[basic_pos + 7] + grid1) * stride;
-            
-            // 优化的矩阵变换
-            Eigen::Matrix<float, 3, 4> apex_norm;
-            apex_norm << x_1, x_2, x_3, x_4,
-                         y_1, y_2, y_3, y_4,
-                         1,   1,   1,   1;
-            
-            Eigen::Matrix<float, 3, 4> apex_dst = transform_matrix * apex_norm;
-            
-            // 提取变换后的坐标
-            obj.landmarks[0] = apex_dst(0, 0);
-            obj.landmarks[1] = apex_dst(1, 0);
-            obj.landmarks[2] = apex_dst(0, 1);
-            obj.landmarks[3] = apex_dst(1, 1);
-            obj.landmarks[4] = apex_dst(0, 2);
-            obj.landmarks[5] = apex_dst(1, 2);
-            obj.landmarks[6] = apex_dst(0, 3);
-            obj.landmarks[7] = apex_dst(1, 3);
-            
-            // 计算装甲板属性
-            obj.length = std::hypot(obj.landmarks[0] - obj.landmarks[6], 
-                                  obj.landmarks[1] - obj.landmarks[7]);
-            obj.width = std::hypot(obj.landmarks[0] - obj.landmarks[2], 
-                                 obj.landmarks[1] - obj.landmarks[3]);
-            
-            // 避免除以零
-            if (obj.width > 1e-5f) {
-                obj.ratio = obj.length / obj.width;
-            } else {
-                obj.ratio = 0.0f;
-                continue; // 跳过无效装甲板
-            }
-            
-            obj.classfication_result = obj.number + ":" + std::to_string(static_cast<int>(obj.prob * 100.0f));
-            
-            // 根据比例确定装甲板类型
-            obj.type = (obj.ratio > 0.6f) ? ArmorType::SMALL : ArmorType::LARGE;
-            
-            // 计算边界框和中心点
-            float min_x = std::min({obj.landmarks[0], obj.landmarks[2], obj.landmarks[4], obj.landmarks[6]});
-            float max_x = std::max({obj.landmarks[0], obj.landmarks[2], obj.landmarks[4], obj.landmarks[6]});
-            float min_y = std::min({obj.landmarks[1], obj.landmarks[3], obj.landmarks[5], obj.landmarks[7]});
-            float max_y = std::max({obj.landmarks[1], obj.landmarks[3], obj.landmarks[5], obj.landmarks[7]});
-            
-            obj.rect = cv::Rect(min_x, min_y, max_x - min_x, max_y - min_y);
-            obj.center = cv::Point2f((min_x + max_x) * 0.5f, (min_y + max_y) * 0.5f);
-            
-            proposals.push_back(obj);
-        } // critical section end
+        // 创建对象
+        Armor obj;
+        
+        obj.prob = box_objectness;
+        
+        // 设置颜色和数字
+        if(box_color == RED_SMALL || box_color == RED_BIG) obj.color = RED;
+        if(box_color == BLUE_SMALL || box_color == BLUE_BIG) obj.color = BLUE;
+        
+        if(box_class==0) obj.number="G";
+        if(box_class==1) obj.number="1";
+        if(box_class==2) obj.number="2";
+        if(box_class==3) obj.number="3";
+        if(box_class==4) obj.number="4";
+        if(box_class==5) obj.number="5";
+        if(box_class==7) obj.number="7";
+        
+        // 提取关键点
+        float x_1 = (feat_ptr[basic_pos + 0] + grid0) * stride;
+        float y_1 = (feat_ptr[basic_pos + 1] + grid1) * stride;
+        float x_2 = (feat_ptr[basic_pos + 2] + grid0) * stride;
+        float y_2 = (feat_ptr[basic_pos + 3] + grid1) * stride;
+        float x_3 = (feat_ptr[basic_pos + 4] + grid0) * stride;
+        float y_3 = (feat_ptr[basic_pos + 5] + grid1) * stride;
+        float x_4 = (feat_ptr[basic_pos + 6] + grid0) * stride;
+        float y_4 = (feat_ptr[basic_pos + 7] + grid1) * stride;
+        
+        // 优化的矩阵变换
+        Eigen::Matrix<float, 3, 4> apex_norm;
+        apex_norm << x_1, x_2, x_3, x_4,
+                     y_1, y_2, y_3, y_4,
+                     1,   1,   1,   1;
+        
+        Eigen::Matrix<float, 3, 4> apex_dst = transform_matrix * apex_norm;
+        
+        // 提取变换后的坐标
+        obj.landmarks[0] = apex_dst(0, 0);
+        obj.landmarks[1] = apex_dst(1, 0);
+        obj.landmarks[2] = apex_dst(0, 1);
+        obj.landmarks[3] = apex_dst(1, 1);
+        obj.landmarks[4] = apex_dst(0, 2);
+        obj.landmarks[5] = apex_dst(1, 2);
+        obj.landmarks[6] = apex_dst(0, 3);
+        obj.landmarks[7] = apex_dst(1, 3);
+        
+        // 计算装甲板属性
+        obj.length = std::hypot(obj.landmarks[0] - obj.landmarks[6], 
+                              obj.landmarks[1] - obj.landmarks[7]);
+        obj.width = std::hypot(obj.landmarks[0] - obj.landmarks[2], 
+                             obj.landmarks[1] - obj.landmarks[3]);
+        
+        // 避免除以零
+        if (obj.width > 1e-5f) {
+            obj.ratio = obj.length / obj.width;
+        } else {
+            obj.ratio = 0.0f;
+            continue; // 跳过无效装甲板
+        }
+        
+        obj.classfication_result = obj.number + ":" + std::to_string(static_cast<int>(obj.prob * 100.0f));
+        
+        // 根据比例确定装甲板类型
+        obj.type = (obj.ratio > 0.6f) ? ArmorType::SMALL : ArmorType::LARGE;
+        
+        // 计算边界框和中心点
+        float min_x = std::min({obj.landmarks[0], obj.landmarks[2], obj.landmarks[4], obj.landmarks[6]});
+        float max_x = std::max({obj.landmarks[0], obj.landmarks[2], obj.landmarks[4], obj.landmarks[6]});
+        float min_y = std::min({obj.landmarks[1], obj.landmarks[3], obj.landmarks[5], obj.landmarks[7]});
+        float max_y = std::max({obj.landmarks[1], obj.landmarks[3], obj.landmarks[5], obj.landmarks[7]});
+        
+        obj.rect = cv::Rect(min_x, min_y, max_x - min_x, max_y - min_y);
+        obj.center = cv::Point2f((min_x + max_x) * 0.5f, (min_y + max_y) * 0.5f);
+        
+        proposals.push_back(obj);
     }
 }
 
@@ -462,8 +455,11 @@ void OpenvinoInfer::nmsMergeBoxes(std::vector<Armor>& proposals, std::vector<Arm
                                               proposals[i].landmarks[j*2+1]));
         }
         
-        // 收集索引以用于后续处理
-        size_t group_idx = merged_groups.size();
+        // 添加到合并组 - 去掉未使用的变量 group_idx
+        merged_groups.push_back(points_group);
+        
+        // 添加当前物体到输出
+        output_objects.push_back(proposals[i]);
         
         // 检查其他物体是否应该合并到当前组
         for (size_t j = i + 1; j < proposals.size(); j++) {
@@ -478,25 +474,20 @@ void OpenvinoInfer::nmsMergeBoxes(std::vector<Armor>& proposals, std::vector<Arm
                 proposals[i].color == proposals[j].color &&
                 std::abs(proposals[i].prob - proposals[j].prob) < MERGE_CONF_ERROR) {
                 
-                // 合并关键点
+                // 合并关键点到当前组的最后一个组
                 for (int k = 0; k < 4; k++) {
-                    points_group.push_back(cv::Point2f(proposals[j].landmarks[k*2],
+                    merged_groups.back().push_back(cv::Point2f(proposals[j].landmarks[k*2],
                                                      proposals[j].landmarks[k*2+1]));
                 }
                 
                 suppressed[j] = true;
             }
         }
-        
-        // 添加当前物体到输出
-        output_objects.push_back(proposals[i]);
-        merged_groups.push_back(std::move(points_group));
     }
     
-    // 处理合并后的关键点
+    // 处理合并后的关键点 - 串行处理，移除OpenMP
     const size_t num_objects = output_objects.size();
     
-    #pragma omp parallel for if(num_objects > 4)
     for (size_t i = 0; i < num_objects; i++) {
         // 只有当有多个检测时才进行平均
         if (merged_groups[i].size() > 4) {
@@ -559,29 +550,6 @@ std::vector<Armor> OpenvinoInfer::infer(cv::Mat &src, int detect_color) {
     tmp_objects.clear();
     ious.clear();
     
-    // 处理异步结果(如果有的话)
-    if (perf_config.use_async_inference && is_async_result_ready) {
-        // 获取上一帧的异步结果
-        ov::Tensor output_tensor = async_infer_request.get_output_tensor();
-        float* output = output_tensor.data<float_t>();
-        
-        // 生成候选装甲板
-        std::vector<Armor> proposals;
-        proposals.reserve(100);
-        
-        std::vector<int> strides = {8, 16, 32};
-        std::vector<GridAndStride> grid_strides;
-        generateGridsAndStride(strides, grid_strides);
-        
-        generateProposals(grid_strides, output, BBOX_CONF_THRESH, proposals);
-        
-        // 应用NMS合并类似检测
-        nmsMergeBoxes(proposals, tmp_objects);
-        
-        // 标记异步结果已处理
-        is_async_result_ready = false;
-    }
-    
     // 图像预处理
     raw_size = cv::Size(src.cols, src.rows);
     float scale_factor;
@@ -592,11 +560,13 @@ std::vector<Armor> OpenvinoInfer::infer(cv::Mat &src, int detect_color) {
     pr_img.convertTo(pre, CV_32F);
     cv::split(pre, pre_split);
     
-    // 使用异步推理
     if (perf_config.use_async_inference) {
-        // 获取输入张量
-        input_tensor = async_infer_request.get_input_tensor(0);
-        async_infer_request.set_input_tensor(input_tensor);
+        // 获取当前请求
+        auto& curr_request = infer_requests_[current_request_idx_];
+        
+        // 准备当前请求输入数据
+        input_tensor = curr_request.get_input_tensor(0);
+        curr_request.set_input_tensor(input_tensor);
         
         float* tensor_data = input_tensor.data<float_t>();
         auto img_offset = INPUT_H * INPUT_W;
@@ -607,11 +577,43 @@ std::vector<Armor> OpenvinoInfer::infer(cv::Mat &src, int detect_color) {
             tensor_data += img_offset;
         }
         
-        // 启动异步推理
-        async_infer_request.start_async();
-        is_async_result_ready = true;
+        // 启动当前推理
+        curr_request.start_async();
         
-        // 返回上一帧的结果
+        // 处理上一次的结果
+        if (!is_first_inference) {
+            int prev_idx = (current_request_idx_ + 1) % 2;
+            auto& prev_request = infer_requests_[prev_idx];
+            
+            try {
+                // 等待上一个推理完成
+                prev_request.wait();
+                
+                // 获取结果
+                ov::Tensor output_tensor = prev_request.get_output_tensor();
+                float* output = output_tensor.data<float_t>();
+                
+                // 处理结果
+                std::vector<Armor> proposals;
+                proposals.reserve(100);
+                
+                std::vector<int> strides = {8, 16, 32};
+                std::vector<GridAndStride> grid_strides;
+                generateGridsAndStride(strides, grid_strides);
+                
+                generateProposals(grid_strides, output, BBOX_CONF_THRESH, proposals);
+                nmsMergeBoxes(proposals, tmp_objects);
+            } catch (const ov::Exception& e) {
+                RCLCPP_WARN(rclcpp::get_logger("OpenvinoInfer"), 
+                           "异步推理错误: %s", e.what());
+            }
+        } else {
+            is_first_inference = false;
+        }
+        
+        // 切换到下一个请求
+        current_request_idx_ = (current_request_idx_ + 1) % 2;
+        
         return tmp_objects;
     } else {
         // 同步推理方式

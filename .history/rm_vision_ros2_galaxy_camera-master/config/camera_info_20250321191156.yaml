@@ -4,8 +4,8 @@ camera_name: narrow_stereo
 camera_matrix:
   rows: 3
   cols: 3
-  data: [1806.45513,    0.     ,  713.64789,
-            0.     , 1805.89753,  571.23168,
+  data: [892.943991,    0.     ,  360.905728,
+            0.     , 893.120511,  291.481082,
             0.     ,    0.     ,    1.     ]
 distortion_model: plumb_bob
 distortion_coefficients:

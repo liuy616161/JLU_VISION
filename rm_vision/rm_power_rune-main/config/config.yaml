@@ -3,8 +3,8 @@ color: blue
 mode: small
 fps: 240
 image:
-  width: 1440
-  height: 1080
+  width: 720
+  height: 540
 detect:
   brightness_threshold:
     blue: 

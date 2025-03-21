@@ -34,7 +34,6 @@ ArmorTrackerNode::ArmorTrackerNode(const rclcpp::NodeOptions & options)
   lost_time_thres_ = this->declare_parameter("tracker.lost_time_thres", 0.3);
 
 
-std::cout<<1<<std::endl;///////1
 
 
   // EKF
@@ -146,7 +145,6 @@ std::cout<<1<<std::endl;///////1
   tracker_->ekf = ExtendedKalmanFilter{f, h, j_f, j_h, u_q, u_r, p0};
 
 
-std::cout<<2<<std::endl;///////2
 
 
   // Reset tracker service
@@ -191,8 +189,6 @@ std::cout<<2<<std::endl;///////2
   //////
   test_pub_ = this->create_publisher<std_msgs::msg::Float64>("/test", 10);
 
-
-std::cout<<3<<std::endl;///////3
 
 
   // Visualization Marker Publisher
@@ -253,8 +249,6 @@ void ArmorTrackerNode::armorsCallback(const auto_aim_interfaces::msg::Armors::Sh
   }
 
 
-std::cout<<4<<std::endl;///////4
-
   // Filter abnormal armors
   armors_msg->armors.erase(
     std::remove_if(
@@ -276,11 +270,6 @@ std::cout<<4<<std::endl;///////4
     armors_msg->armors.end()); 
   }
   
-  //  for (const auto & armor : armors_msg->armors){
-  //     std::cout<<"armor.number--"<<armor.number<<std::endl;
-  //   } 
-
-std::cout<<222<<std::endl;///////b
 
 
 //Filter low level armor
@@ -292,7 +281,6 @@ std::cout<<222<<std::endl;///////b
     highest_level = 3;
   }
 
-std::cout<<444<<std::endl;///////d
 
   //检查装甲板优先级是否改变
 
@@ -310,7 +298,6 @@ for (const auto &armor : armors_msg->armors){
 }    
 
 
-std::cout<<333<<std::endl;///////c
 
   //抹去低优先级的装甲板
   
@@ -332,7 +319,6 @@ armors_msg->armors.erase(
     armors_msg->armors.end()); 
 
 
-std::cout<<5<<std::endl;///////5
 
   // Init message
   auto_aim_interfaces::msg::TrackerInfo info_msg;
@@ -341,7 +327,6 @@ std::cout<<5<<std::endl;///////5
   target_msg.header.stamp = time;
   target_msg.header.frame_id = target_frame_;
 
-std::cout<<111<<std::endl;///////a
 
   // Update tracker
   if (tracker_->tracker_state == Tracker::LOST || priority_level != highest_level) {
@@ -422,8 +407,7 @@ std::cout<<111<<std::endl;///////a
       }
       
       }
-     
-std::cout<<6<<std::endl;///////6
+
 
       if(fabsf(target_pub.get_v_yaw) > 3.0)
       {
@@ -466,7 +450,6 @@ std::cout<<6<<std::endl;///////6
             target_pub.get_position_z= state(4);
         }
 
-std::cout<<7<<std::endl;///////7
 
       armors_num = static_cast<int>(tracker_->tracked_armors_num);
       // // 提取装甲板id
@@ -563,9 +546,7 @@ std::cout<<7<<std::endl;///////7
       } else if (mv_yaw < -180.0){
         mv_yaw += 360;
       }
-     
-std::cout<<8<<std::endl;///////8
-
+      
 
       //根据移动角度判断是否开火，以及检测所发位置是否正常
       if(fabsf(mv_yaw)>5){

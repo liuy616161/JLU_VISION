@@ -10,11 +10,8 @@
 #include <array>
 #include <Eigen/Dense>
 #include "armor_detector/armor.hpp"
-
-// 启用OpenMP并行处理
-#if defined(_OPENMP)
-#include <omp.h>
-#endif
+#include <rclcpp/publisher.hpp>
+#include <rclcpp/rclcpp.hpp>
 
 namespace rm_auto_aim {
 
@@ -24,7 +21,6 @@ struct PerformanceConfig {
     bool use_async_inference = true;                  // 使用异步推理
     bool use_int8_inference = false;                  // 使用INT8推理
     int inference_threads = 4;                        // 推理线程数
-    int nms_parallelism_threshold = 16;              // NMS并行化阈值
 };
 
 struct GridAndStride {
@@ -61,9 +57,9 @@ public:
     ov::InferRequest infer_request;
     ov::Tensor input_tensor;
     
-    // 异步推理支持
-    ov::InferRequest async_infer_request;
-    bool is_async_result_ready = false;
+    ov::InferRequest infer_requests_[2];
+int current_request_idx_ = 0;
+bool is_first_inference = true;
     
     // 图像和变换相关
     cv::Size raw_size;
