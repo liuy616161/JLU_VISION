@@ -127,7 +127,7 @@ void OpenvinoInfer::generateProposals(const std::vector<GridAndStride>& grid_str
         int box_class = argmax(feat_ptr + basic_pos + 9 + NUM_COLORS, NUM_CLASSES);
 
         // 过滤颜色逻辑保持不变
-        if (box_color == PURPLE_SMALL || box_color == PURPLE_BIG) {
+        if (box_color == PURPLE_SMALL || box_color == PURPLE_BIG || box_color == GRAY_SMALL || box_color == GRAY_BIG) {
             continue;
         }
         

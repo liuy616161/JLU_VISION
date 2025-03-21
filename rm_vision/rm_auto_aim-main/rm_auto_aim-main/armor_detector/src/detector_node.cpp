@@ -113,8 +113,6 @@ void ArmorDetectorNode::taskCallback(const std_msgs::msg::Int64::SharedPtr task_
   //std::cout<<"task_mode:"<<task_mode<<std::endl;
 }
 
-///std::cout<<12<<std::endl;///////12
-
 
 void ArmorDetectorNode::imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr img_msg)
 {
@@ -204,14 +202,11 @@ std::vector<Armor> ArmorDetectorNode::detectArmors(
   // Convert ROS img to cv::Mat
   auto img = cv_bridge::toCvShare(img_msg, "bgr8")->image;
   
-  //int detect_color=get_parameter("detect_color").as_int();
+  int detect_color=get_parameter("detect_color").as_int();
 
-  int detect_color=1;
+  //int detect_color=1;
 
   auto armors=infer_->infer(img,detect_color);
-
-
-
 
   auto final_time = this->now();
   auto latency = (final_time - img_msg->header.stamp).seconds() * 1000;
