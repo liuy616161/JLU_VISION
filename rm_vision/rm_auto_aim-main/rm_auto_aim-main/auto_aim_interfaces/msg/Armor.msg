@@ -1,0 +1,6 @@
+string number
+string type
+float32 distance_to_image_center
+float32 armor_img_x
+float32 armor_img_y
+geometry_msgs/Pose pose

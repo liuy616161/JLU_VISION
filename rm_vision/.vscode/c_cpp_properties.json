@@ -1,0 +1,23 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/opt/ros/humble/include/**",
+        "/home/tars-go/Documents/JLURoboVision_JT/src/rm_vision/rm_auto_aim-main/rm_auto_aim-main/armor_detector/include/**",
+        "/home/tars-go/Documents/JLURoboVision_JT/src/rm_vision/rm_auto_aim-main/rm_auto_aim-main/armor_tracker/include/**",
+        "/home/tars-go/Documents/JLURoboVision_JT/src/rm_vision/rm_serial_driver-main/rm_serial_driver-main/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}
