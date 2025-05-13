@@ -97,15 +97,14 @@ ArmorDetectorNode::ArmorDetectorNode(const rclcpp::NodeOptions & options)
     "/image_raw", rclcpp::SensorDataQoS(rclcpp::KeepLast(1)),
     std::bind(&ArmorDetectorNode::imageCallback, this, std::placeholders::_1));
 
-  task_sub_ = this->create_subscription<std_msgs::msg::Int64>(
-    "/task_mode", rclcpp::SensorDataQoS(),
+  task_sub_ = this->create_subscription<global_interface::msg::SerialTask>(
+    "/serial_mode", rclcpp::SensorDataQoS(),
     std::bind(&ArmorDetectorNode::taskCallback, this, std::placeholders::_1));
 }
 
-void ArmorDetectorNode::taskCallback(const std_msgs::msg::Int64::SharedPtr task_msg)
+void ArmorDetectorNode::taskCallback(const global_interface::msg::SerialTask task_msg)
 {
-  int task_mode = task_msg->data;
-  if (task_mode == 0) {
+  if (task_msg->mode == 0) {
     is_aim_task_ = true;
   } else {
     is_aim_task_ = false;

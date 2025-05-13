@@ -28,6 +28,7 @@
 #include "global_interface/msg/serial.hpp"
 #include "global_interface/msg/gimbal.hpp"
 #include "global_interface/msg/buff.hpp"
+#include "global_interface/msg/serialtask.hpp"
 
 namespace rm_serial_driver
 {
@@ -92,7 +93,7 @@ private:
 
   std_msgs::msg::Float64 yaw_msg;
   std_msgs::msg::Int8 sentry_decision_msg;
-  std_msgs::msg::Int64 task;//0-aim 1-small_buff 2-large_buff
+  global_interface::msg::SerialTask task_msg;
   std_msgs::msg::Float64 pitch_test;
   std_msgs::msg::Float64 pitch_calculate_msg;
   std_msgs::msg::Float64 pitch_imu_msg;
@@ -110,11 +111,10 @@ private:
   
 
     // Task message
-  rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr task_pub_;
+  rclcpp::Publisher<global_interface::msg::SerialTask>::SharedPtr task_pub_;
   rclcpp::Publisher<global_interface::msg::Serial>::SharedPtr serial_msg_pub_;
 
   rclcpp::Subscription<global_interface::msg::Buff>::SharedPtr buff_info_sub_;
-  rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr task_sub_;
 
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr test_pub_;
   rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr pitch_calculate_;

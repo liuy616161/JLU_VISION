@@ -49,7 +49,7 @@ namespace rm_serial_driver
     timestamp_offset_ = this->declare_parameter("timestamp_offset", 0.0);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
    // Create Publisher
-    task_pub_ = this->create_publisher<std_msgs::msg::Int64>("/task_mode", 10);
+    task_pub_ = this->create_publisher<global_interface::msg::SerialTask>("/serial_task", 10);
     latency_pub_ = this->create_publisher<std_msgs::msg::Float64>("/latency", 10);
     marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("/aiming_point", 10);
     previous_exposure_time_pub_ = this->create_publisher<std_msgs::msg::Int64>("/previous_exposure_time", 10);
@@ -196,13 +196,17 @@ void RMSerialDriver::exposureTimeCallback(const std_msgs::msg::Int64::SharedPtr 
           yaw_msg.data = packet.yaw/57.2957/1000;
           sentry_decision_msg.data = packet.sentry_decision;
           
+          task_msg.header.frame_id = "serial";
+          task_msg.header.stamp = this->get_clock()->now();
+          task_msg.color = packet.detect_color;
+          task_msg.mode = packet.task_mode;
+          task_msg.direction = packet.rune_direction;
+          task_msg.is_stable = packet.rune_stable;
 
-          if(packet.task_mode!=0)    task.data = packet.task_mode + packet.detect_color*2;
-          else   task.data=packet.task_mode;
           
           // 根据任务模式设置不同的曝光时间
           int64_t current_exposure_time;
-          if(task.data == 0) {  // 自瞄模式
+          if(packet.task_mode == 0) {  // 自瞄模式
               current_exposure_time = aim_et_;
           } else  {  // 能量机关模式   
               current_exposure_time = buff_et_;
@@ -289,7 +293,7 @@ void RMSerialDriver::exposureTimeCallback(const std_msgs::msg::Int64::SharedPtr 
 
 void RMSerialDriver::sendData(const auto_aim_interfaces::msg::Target::SharedPtr msg)
 {
-  if(task.data == 0)
+  if(task.mode == 0)
   {
     //std::cout<<"task"<<task.data<<std::endl;
  const static std::map<std::string, uint8_t> id_unit8_map{
@@ -349,7 +353,7 @@ void RMSerialDriver::buffMsgCallback(global_interface::msg::Buff::SharedPtr buff
 {
 
   //std::cout<<"  buff_msg gettttttttt"<<std::endl;
-  if(task.data != 0)
+  if(task.mode != 0)
   {
    SendPacket packet;
    /*

@@ -25,6 +25,21 @@ void Param::load(const std::string& filename) {
         throw std::runtime_error("unknown color " + colorStr);
     }
     DRAW_COLOR = COLOR == Color::BLUE ? RED : BLUE;
+
+    // direction
+    std::string directionStr;
+    fs["direction"] >> directionStr;
+    if (std::transform(directionStr.begin(), directionStr.end(), directionStr.begin(),
+                       [](unsigned char c) { return std::tolower(c); });
+        directionStr == "clockwise") {
+        DIRECTION = Direction::CLOCKWISE;
+    } else if (directionStr == "anti_clockwise") {
+        DIRECTION = Direction::ANTI_CLOCKWISE;
+    } else if (directionStr == "stable") {
+        DIRECTION = Direction::STABLE;
+    } else {
+        throw std::runtime_error("unknown direction " + directionStr);
+    }
     // fps
     fs["fps"] >> FPS;
     // image width and height

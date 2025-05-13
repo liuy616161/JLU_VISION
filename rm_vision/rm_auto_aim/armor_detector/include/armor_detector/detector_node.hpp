@@ -24,6 +24,9 @@
 #include "armor_detector/pnp_solver.hpp"
 #include "auto_aim_interfaces/msg/armors.hpp"
 
+
+#include "global_interface/msg/serialtask.hpp"
+
 #include "./infer_api.hpp"
 
 namespace rm_auto_aim
@@ -46,9 +49,9 @@ private:
   void publishMarkers();
 
    //  task subscriber
-  rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr task_sub_;
+  rclcpp::Subscription<global_interface::msg::SerialTask>::SharedPtr task_sub_;
   bool is_aim_task_;
-  void taskCallback(const std_msgs::msg::Int64::SharedPtr task_msg);
+  void taskCallback(const global_interface::msg::SerialTask task_msg);
 
   // Armor Detector
   std::unique_ptr<OpenvinoInfer> infer_;

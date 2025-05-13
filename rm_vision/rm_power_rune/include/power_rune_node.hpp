@@ -12,6 +12,7 @@
 #include "PowerRune.h"
 #include "global_interface/msg/serial.hpp"
 #include "global_interface/msg/buff.hpp"
+#include "global_interface/msg/serialtask.hpp"
 
 namespace power_rune{
 
@@ -27,12 +28,12 @@ private:
     const double SAVE_INTERVAL = 1.0;  // 单位：秒
     
     // 任务回调函数
-    void task_callback(const std_msgs::msg::Int64::ConstSharedPtr task_msg); 
+    void task_callback(const global_interface::msg::SerialTask task_msg); 
     // 图像回调函数
     void imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr img_msg);
 
     std::unique_ptr<PowerRune> power_rune_;
-    rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr task_sub_;
+    rclcpp::Subscription<global_interface::msg::SerialTask>::SharedPtr task_sub_;
 
     rclcpp::Publisher<global_interface::msg::Buff>::SharedPtr buff_pub_;
             global_interface::msg::Buff buff_msg;

@@ -67,6 +67,7 @@ struct Param {
     inline static cv::Mat DIST_COEFFS;
 
     inline static Color COLOR;
+    inline static Direction DIRECTION;
 
     inline static int ARROW_BRIGHTNESS_THRESHOLD;
     inline static int ARMOR_BRIGHTNESS_THRESHOLD;

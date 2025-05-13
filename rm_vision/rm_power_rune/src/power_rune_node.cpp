@@ -47,8 +47,8 @@ namespace power_rune{
             "/image_raw", rclcpp::SensorDataQoS(rclcpp::KeepLast(1)),
             std::bind(&PowerRuneNode::imageCallback, this, std::placeholders::_1));
 
-           task_sub_ = this->create_subscription<std_msgs::msg::Int64>(
-        "/task_mode", rclcpp::SensorDataQoS(),
+           task_sub_ = this->create_subscription<global_interface::msg::SerialTask>(
+        "/serial_task", rclcpp::SensorDataQoS(),
             std::bind(&PowerRuneNode::task_callback, this, std::placeholders::_1));
 
         serial_sub_ = this->create_subscription<global_interface::msg::Serial>(
@@ -89,9 +89,14 @@ namespace power_rune{
     }
     #endif
     
-    void PowerRuneNode::task_callback(const std_msgs::msg::Int64::ConstSharedPtr task_msg)
+    void PowerRuneNode::task_callback(const global_interface::msg::SerialTask task_msg)
     {
-        rune_task_mode=task_msg->data;
+        rune_task_mode=task_msg->mode;
+        Param::COLOR=task_msg->color;
+        Param::MODE=task_msg->mode-1;
+        if(task_msg->is_stable==0) Param::DIRECTION=task_msg->direction+2;
+        else Param::DIRECTION=1;
+        Param::DIRECTION=task_msg->direction+2;
     }   
 
    
@@ -99,13 +104,7 @@ namespace power_rune{
     {   
         if(rune_task_mode==0){
             return;
-        }   
-        
-        if(rune_task_mode==1||rune_task_mode==2) Param::COLOR=Color::RED;
-        else Param::COLOR=Color::BLUE;
-
-        if(rune_task_mode==1||rune_task_mode==3) Param::MODE=Mode::SMALL;
-        else Param::MODE=Mode::BIG;
+        }           
                 
 
         auto img = cv_bridge::toCvShare(img_msg, "rgb8")->image;

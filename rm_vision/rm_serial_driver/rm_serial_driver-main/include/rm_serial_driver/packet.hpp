@@ -14,10 +14,11 @@ struct ReceivePacket
 {
   uint8_t header = 0x5A;
   uint8_t detect_color : 1;  // 0-red 1-blue
-  // uint8_t task_mode : 2;   // 0-aim 1-buff
   bool reset_tracker : 1;
   uint8_t task_mode : 2;   // 0-aim 1-small buff   2 big buff
-  uint8_t reserved : 4;
+  bool rune_direction : 1;  // 0-anti-clockwise 1-clockwise
+  bool rune_stable : 1;    // 0-unstable 1-stable
+  uint8_t reserved : 2;
   float roll;
   float pitch;
   float yaw;

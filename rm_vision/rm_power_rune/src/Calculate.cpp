@@ -144,31 +144,7 @@ void Calculator::angleCal() {
  * @brief 旋转方向解算
  */
 void Calculator::directionCal() {
-    if (m_direction == Direction::UNKNOWN || m_direction == Direction::STABLE) {
-        m_directionData.push_back(m_angleRel);
-        if ((int)m_directionData.size() >= m_directionThresh) {
-            // 计算角度差并投票
-            int stable = 0, anti = 0, clockwise = 0;
-            for (size_t i = 0; i < m_directionData.size() / 2; ++i) {
-                auto temp{m_directionData.at(i + m_directionData.size() / 2) - m_directionData.at(i)};
-                if (temp > +1.5e-2) {
-                    clockwise++;
-                } else if (temp < -1.5e-2) {
-                    anti++;
-                } else {
-                    stable++;
-                }
-            }
-            // 得票数最多的为对应旋转方向
-            if (int temp{std::max({stable, clockwise, anti})}; temp == clockwise) {
-                m_direction = Direction::CLOCKWISE;
-            } else if (temp == anti) {
-                m_direction = Direction::ANTI_CLOCKWISE;
-            } else {
-                m_direction = Direction::STABLE;
-            }
-        }
-    }
+    m_direction = Param::DIRECTION;
 #if CONSOLE_OUTPUT >= 2
     MUTEX.lock();
     std::cout << "direction: "

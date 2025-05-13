@@ -2,6 +2,7 @@
 color: blue
 mode: big
 fps: 240
+direction: 0  # anti_clockwise,  clockwise ,stable 
 image:
   width: 1440
   height: 1080
