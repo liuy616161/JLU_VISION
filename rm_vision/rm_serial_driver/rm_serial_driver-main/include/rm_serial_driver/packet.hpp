@@ -18,7 +18,7 @@ struct ReceivePacket
   uint8_t task_mode : 2;   // 0-aim 1-small buff   2 big buff
   bool rune_direction : 1;  // 0-anti-clockwise 1-clockwise
   bool rune_stable : 1;    // 0-unstable 1-stable
-  uint8_t reserved : 2;
+  uint8_t change_exposure : 2;   //0-stay  1-add 2-sub
   float roll;
   float pitch;
   float yaw;

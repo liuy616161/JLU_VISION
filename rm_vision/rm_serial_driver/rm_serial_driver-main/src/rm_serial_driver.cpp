@@ -41,10 +41,7 @@ namespace rm_serial_driver
     sentry_decision_pub_ = this->create_publisher<std_msgs::msg::Int8>("sentry_decision",10);
     exposure_time_pub_ = this->create_publisher<std_msgs::msg::Int64>("exposure_time",10);
    
-    // 从参数服务器获取曝光时间参数
-    aim_et_ = this->declare_parameter("exposure_time_aim", 2800);
-    buff_et_ = this->declare_parameter("exposure_time_buff", 6800);
-    previous_exposure_time_ = this->declare_parameter("previous_exposure_time", 1000);
+
     // TF broadcaster
     timestamp_offset_ = this->declare_parameter("timestamp_offset", 0.0);
     tf_broadcaster_ = std::make_unique<tf2_ros::TransformBroadcaster>(*this);
@@ -52,7 +49,6 @@ namespace rm_serial_driver
     task_pub_ = this->create_publisher<global_interface::msg::SerialTask>("/serial_task", 10);
     latency_pub_ = this->create_publisher<std_msgs::msg::Float64>("/latency", 10);
     marker_pub_ = this->create_publisher<visualization_msgs::msg::Marker>("/aiming_point", 10);
-    previous_exposure_time_pub_ = this->create_publisher<std_msgs::msg::Int64>("/previous_exposure_time", 10);
     //new//////////////////////
     //qos
     rclcpp::QoS qos(0);
@@ -112,18 +108,9 @@ namespace rm_serial_driver
         "/tracker/target", rclcpp::SensorDataQoS(),
         std::bind(&RMSerialDriver::sendData, this, std::placeholders::_1));
 
-    exposure_time_sub_ = this->create_subscription<std_msgs::msg::Int64>(
-      "exposure_time", 
-      qos, 
-      std::bind(&RMSerialDriver::exposureTimeCallback, this, std::placeholders::_1)
-  );
+        
   }
-
-// 添加回调函数
-void RMSerialDriver::exposureTimeCallback(const std_msgs::msg::Int64::SharedPtr msg)
-{
-    previous_exposure_time_ = msg->data;
-}
+  
 
 
   RMSerialDriver::~RMSerialDriver()
@@ -208,19 +195,22 @@ void RMSerialDriver::exposureTimeCallback(const std_msgs::msg::Int64::SharedPtr 
           int64_t current_exposure_time;
           if(packet.task_mode == 0) {  // 自瞄模式
               current_exposure_time = aim_et_;
-          } else  {  // 能量机关模式   
+          }else  {  // 能量机关模式   
               current_exposure_time = buff_et_;
+          }
+
+          if(packet.change_exposure == 1) {  // 增加曝光时间
+              aim_et_ += 100;
+              buff_et_ += 100;
+          } else if (packet.change_exposure == 2) {  // 减少曝光时间
+              aim_et_ -= 100;
+              buff_et_ -= 100;
           }
           
           // 只有当曝光时间改变时才发布消息
           if(current_exposure_time != previous_exposure_time_) {
               exposure_time_msg.data = current_exposure_time;
               exposure_time_pub_->publish(exposure_time_msg);
-              
-              // 发布前一个曝光时间
-              auto previous_msg = std_msgs::msg::Int64();
-              previous_msg.data = previous_exposure_time_;
-              previous_exposure_time_pub_->publish(previous_msg);
               
               // 更新前一个曝光时间
               previous_exposure_time_ = current_exposure_time;

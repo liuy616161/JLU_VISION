@@ -54,6 +54,17 @@ private:
 
   void buffMsgCallback(global_interface::msg::Buff::SharedPtr buff_msg);
 
+  //exposure time
+  int64_t aim_et_         =   1000;
+  int64_t buff_et_        =   2000;
+  int64_t previous_exposure_time_;
+  int64_t current_exposure_time_;
+
+  
+  rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr exposure_time_pub_;
+  std_msgs::msg::Int64 exposure_time_msg;// aim and buff are not the same exposure time
+
+
   // Serial port
   std::unique_ptr<IoContext> owned_ctx_;
   std::string device_name_;
@@ -99,15 +110,7 @@ private:
   std_msgs::msg::Float64 pitch_imu_msg;
   
   
-  rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr exposure_time_pub_;
-  std_msgs::msg::Int64 exposure_time_msg;// aim and buff are not the same exposure time
-  int64_t aim_et_;
-  int64_t buff_et_;
-  int64_t previous_exposure_time_;
-  rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr exposure_time_sub_;
-  void exposureTimeCallback(const std_msgs::msg::Int64::SharedPtr msg);
-  rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr previous_exposure_time_pub_;
-  std_msgs::msg::Int64::SharedPtr previous_exposure_time_msg_;
+  
   
 
     // Task message
