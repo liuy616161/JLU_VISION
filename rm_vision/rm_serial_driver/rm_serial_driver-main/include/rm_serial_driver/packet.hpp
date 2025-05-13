@@ -36,6 +36,7 @@ struct SendPacket
   uint8_t armors_num : 3;  // 2-balance 3-outpost 4-normal
   uint8_t flag_spin_mov : 1;
   uint8_t reserved : 1;
+  uint8_t exposure_time : 6;
   float yaw;
   float pitch;
   float fire;

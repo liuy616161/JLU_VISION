@@ -199,12 +199,18 @@ namespace rm_serial_driver
               current_exposure_time = buff_et_;
           }
 
-          if(packet.change_exposure == 1) {  // 增加曝光时间
-              aim_et_ += 100;
-              buff_et_ += 100;
-          } else if (packet.change_exposure == 2) {  // 减少曝光时间
-              aim_et_ -= 100;
-              buff_et_ -= 100;
+          if(packet.change_exposure == 1) {  
+              if(task_msg.mode == 0) {  
+                  aim_et_ += 100;
+              } else {  
+                  buff_et_ += 100;
+              }
+          } else if (packet.change_exposure == 2) {  
+              if(task_msg.mode == 0) {  
+                  aim_et_ -= 100;
+              } else {  
+                  buff_et_ -= 100;
+              }
           }
           
           // 只有当曝光时间改变时才发布消息
@@ -315,6 +321,8 @@ void RMSerialDriver::sendData(const auto_aim_interfaces::msg::Target::SharedPtr 
     packet.v_yaw = msg->v_yaw;
     packet.dist = sqrt(msg->position.x*msg->position.x+msg->position.y*msg->position.y);
     packet.flag_spin_mov = msg->flag_spin_mov;
+
+    packer.exposure_time = current_exposure_time/100;
     // packet.aim_x=msg->aim_x;
     // packet.aim_y=msg->aim_y;
     // packet.aim_z=msg->aim_z;
@@ -364,6 +372,8 @@ void RMSerialDriver::buffMsgCallback(global_interface::msg::Buff::SharedPtr buff
     packet.fire = 1;
     packet.v_yaw = 1;
 
+    packet.exposure_time = current_exposure_time/100;
+    packet.dist = buff_msg->distance;
 
     //pitch_test.data = packet.pitch;
     //test_pub_->publish(pitch_test);
