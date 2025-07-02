@@ -52,6 +52,8 @@ private:
   rclcpp::Time last_time_;
   double dt_;
 
+  double v_yaw;
+
   // Armor tracker
   double last_pre_yaw;
   double pitch_diff;
@@ -61,6 +63,7 @@ private:
   double s2qxyz_max_, s2qxyz_min_,s2qyaw_max_,s2qyaw_min_, s2qr_;
   double r_xyz_factor, r_yaw;
   double lost_time_thres_;
+  double lost_time_;
   std::unique_ptr<Tracker> tracker_;
 
   // Reset tracker service
@@ -77,10 +80,11 @@ private:
   float spinning_diff = 0.0; //用于判断敌方是否为小陀螺，更改开火逻辑
   int frequency_cnt = 0;
   int spinning_cnt = 0;
-  bool flag_spin = 1;
+  bool flag_spin = 0;
   int latency_flag = 0;//顺时针时向左，逆时针向右移动为0；顺时针向右，逆时针向左移动为1
   float dy = 0.0;
   float last_y = 0.0;
+
   
  
   // Subscriber with tf2 message_filter
@@ -123,6 +127,12 @@ private:
       float *fire = new float;
 
   };
+
+
+  float vy;
+  std_msgs::msg::Float64 vy_msg;
+  rclcpp::Publisher<std_msgs::msg::Float64>::SharedPtr vy_pub_;
+
 
   rclcpp::Subscription<std_msgs::msg::Float64>::SharedPtr yaw_sub_;
   rclcpp::Subscription<std_msgs::msg::Int8>::SharedPtr sentry_decision_sub_;

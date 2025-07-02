@@ -1,0 +1,74 @@
+%YAML 1.2
+color: red
+mode: small
+fps: 240
+direction: anti_clockwise  
+image:
+  width: 1440  #1440
+  height: 1080  #1080
+detect:
+  brightness_threshold:
+    blue: 
+      arrow: 170
+      armor: 30
+    red:
+      arrow: 170  #150
+      armor: 30 #15
+  local_roi:
+    distance_ratio: 1.2
+    width: 100
+  armor_center_vertical_distance_threshold: 90
+  global_roi_length_ratio: 1.5
+  arrow:
+    lightline:
+      area:
+        min: 60
+        max: 1000
+      aspect_ratio_max: 5
+      num:
+        min: 4
+        max: 13
+    same_area_ratio_max: 5
+    aspect_ratio:
+      min: 2
+      max: 12
+    area_max: 8000 # 8000
+  armor:
+    ellipse:
+      area:
+        min: 1000
+        max: 7000
+      circularity:
+        min: 0.6
+  centerR:
+    area:
+      min: 100
+      max: 1000
+    aspect_ratio_max: 2
+calculate:
+  bullet_speed:
+    min: 20
+    default: 23
+  tvec_c2g: [0.0, -30.0, -60.00]    #x轴正向右，y轴正向下，z轴正向会认为更近   #相机坐标系，z轴向前
+  compansate:
+    time: 20 #165
+    pitch: 1.0
+    yaw: 1.8
+  intrinsic_matrix: !!opencv-matrix #InstrinsicMatrix
+    rows: 3
+    cols: 3
+    dt: d
+    data: [2410.6082812904583, 0.0, 720.9494148705954, 0.0, 2409.129686034073, 519.3402327013587, 0.0, 0.0, 1.0]
+  distortion: !!opencv-matrix #Distortion
+    rows: 5
+    cols: 1
+    dt: d  
+    data: [-0.09796198583636388, 0.23337065973353116, 9.352013680842097e-05, -0.0016149198668571397, 0.0]
+  armor:
+    radius: 135
+  fit_data_size:
+    min: 20
+    max: 1200
+
+
+  

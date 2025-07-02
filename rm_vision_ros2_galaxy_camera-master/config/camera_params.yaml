@@ -2,5 +2,10 @@
   ros__parameters:
     camera_name: narrow_stereo
 
+<<<<<<< HEAD
     exposure_time: 3500
     gain: 8.0
+=======
+    exposure_time: 2800
+    gain: 10.0
+>>>>>>> 75f713b (clean)

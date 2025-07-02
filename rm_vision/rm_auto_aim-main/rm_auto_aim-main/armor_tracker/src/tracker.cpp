@@ -144,6 +144,7 @@ void Tracker::update(const Armors::SharedPtr & armors_msg)
   } else if (tracker_state == TEMP_LOST) {
     if (!matched) {
       lost_count_++;
+      
       if (lost_count_ > lost_thres) {
         lost_count_ = 0;
         tracker_state = LOST;
@@ -165,7 +166,7 @@ void Tracker::initEKF(const Armor & a)
 
   // Set initial position at 0.2m behind the target
   target_state = Eigen::VectorXd::Zero(9);
-  double r = 0.26;
+  double r = 0.26;     
   double xc = xa + r * cos(yaw);
   double yc = ya + r * sin(yaw);
   dz = 0, another_r = r;
@@ -192,7 +193,7 @@ void Tracker::handleArmorJump(const Armor & current_armor)
   updateArmorsNum(current_armor);
   // Only 4 armors has 2 radius and height
   if (tracked_armors_num == ArmorsNum::NORMAL_4) {
-    std::cout<<"dz:"<<current_armor.pose.position.z<<std::endl;
+    // std::cout<<"dz:"<<current_armor.pose.position.z<<std::endl;
     dz = target_state(4) - current_armor.pose.position.z;
     target_state(4) = current_armor.pose.position.z;
     std::swap(target_state(8), another_r);

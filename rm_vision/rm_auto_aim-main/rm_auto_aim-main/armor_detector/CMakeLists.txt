@@ -20,15 +20,22 @@ find_package(ament_cmake_auto REQUIRED)
 find_package(OpenCV REQUIRED)
 ament_auto_find_build_dependencies()
 
+find_package(global_interface REQUIRED)
+
 ###########
 ## Build ##
 ###########
+
 
 ament_auto_add_library(${PROJECT_NAME} SHARED
   DIRECTORY src
 )
 
+<<<<<<< HEAD:rm_vision/rm_auto_aim-main/rm_auto_aim-main/armor_detector/CMakeLists.txt
 target_include_directories(${PROJECT_NAME} PUBLIC ${OpenCV_INCLUDE_DIRS})
+=======
+target_include_directories(${PROJECT_NAME} PUBLIC ${CMAKE_CURRENT_SOURCE_DIR}/include ${OpenCV_INCLUDE_DIRS})
+>>>>>>> 75f713b (clean):rm_vision/rm_auto_aim/armor_detector/CMakeLists.txt
 target_link_libraries(${PROJECT_NAME} ${OpenCV_LIBS})
 
 rclcpp_components_register_node(${PROJECT_NAME}

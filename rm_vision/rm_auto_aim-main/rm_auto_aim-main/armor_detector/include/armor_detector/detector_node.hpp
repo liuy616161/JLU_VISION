@@ -25,6 +25,7 @@
 #include "armor_detector/number_classifier.hpp"
 #include "armor_detector/pnp_solver.hpp"
 #include "auto_aim_interfaces/msg/armors.hpp"
+#include "global_interface/msg/serial_task.hpp"
 
 
 namespace rm_auto_aim
@@ -47,10 +48,20 @@ private:
   void publishMarkers();
 
    //  task subscriber
+<<<<<<< HEAD:rm_vision/rm_auto_aim-main/rm_auto_aim-main/armor_detector/include/armor_detector/detector_node.hpp
   rclcpp::Subscription<std_msgs::msg::Int64>::SharedPtr task_sub_;
   bool is_aim_task_;
   void taskCallback(const std_msgs::msg::Int64::SharedPtr task_msg);
 
+=======
+  rclcpp::Subscription<global_interface::msg::SerialTask>::SharedPtr task_sub_;
+
+  bool is_aim_task_;
+
+  void taskCallback(const global_interface::msg::SerialTask task_msg);
+
+
+>>>>>>> 75f713b (clean):rm_vision/rm_auto_aim/armor_detector/include/armor_detector/detector_node.hpp
   // Armor Detector
   std::unique_ptr<Detector> detector_;
 

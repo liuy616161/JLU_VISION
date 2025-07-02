@@ -1,8 +1,10 @@
 #include "armor_tracker/trajectory.h"
+#include <tinyxml2.h>
 
 double PredictPitchXY::v0now;
 
 PredictPitchXY PredictPitchXY::instance;  // 一定要初始化静态变量
+
 
 double PredictPitchXY::setBulletSpeed(float bulletSpeed)
 {
@@ -35,8 +37,8 @@ double PredictPitchXY::dropshotRK45()
 
     time_acc = 0;
     theta_d = theta;  // 将theta赋给过程量
-    X_d = 0.20* cos(theta_d);   // 2024infantry枪管相对于云台中心的水平长度
-    Y_d = 0.20* sin(theta_d) ;  // 2024infantry枪管相对于云台中心的垂直高度
+    X_d = 0.107* cos(theta_d);   // 2024infantry枪管相对于云台中心的水平长度 107.83
+    Y_d = 0.107* sin(theta_d) ;  // 2024infantry枪管相对于云台中心的垂直高度
     v0_d = v0now;
 
     double time_step = 0.0004;  // 时间步长
@@ -166,6 +168,7 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
   float static_x = 0.00;
   float static_z = 0.00;
   // 线性预测
+<<<<<<< HEAD:rm_vision/rm_auto_aim-main/rm_auto_aim-main/armor_tracker/src/trajectory.cpp
   float algorithm_time = 3; //可以通过latency查看
   float respond_time = 140 ;   //可以通过打小陀螺测试得到
   if(v_yaw > 4){
@@ -174,7 +177,33 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
   }
   if(v_yaw<-4){
     respond_time=100;
+=======
+  float algorithm_time = 5; //可以通过latency查看
+  float respond_time = 0;   //可以通过打小陀螺测试得到
+
+  // if(fabsf(v_yaw) > 6.0){
+  //     //对于高速旋转的目标，采取秒准中心的策略，respond_time 理应更少
+  //     respond_time = 76 ;//////new 5's latency  //70 顺 负
+  // }
+
+  int i = 0;
+  float center_yaw = (float)(atan2(yw, xw));
+
+
+  float vyaw_speed_n = 8.8;
+  float vyaw_speed_s = -vyaw_speed_n;
+  float vyaw_if_fast = abs(vyaw_speed_n);
+  if(v_yaw > vyaw_speed_n){
+      //对于高速旋转的目标，采取秒准中心的策略，respond_time 理应更少
+      respond_time = 80 ;//////new 5's latency  //76 逆时针 正
+>>>>>>> 75f713b (clean):rm_vision/rm_auto_aim/armor_tracker/src/trajectory.cpp
   }
+  if(v_yaw < vyaw_speed_s){
+      //对于高速旋转的目标，采取秒准中心的策略，respond_time 理应更少
+      respond_time = 78 ;//////new 5's latency  //70 顺时针 负
+  }
+
+
   if( abs(v) > 0.5 && latency_flag == 1){
     respond_time += 20;
   }
@@ -182,9 +211,10 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
   {
     respond_time += 150;
   }
-  std::cout<<"latency_flag:"<<latency_flag<<std::endl;
+  // std::cout<<"latency_flag:"<<latency_flag<<std::endl;
 
   float bias_time = algorithm_time + respond_time;  // bias_time 作为1、上位机 图像传输、算法解算；2、通信 传输耗时；3、下位机 拨弹响应、子弹加速 的趋于固定的时间损耗
+  // std::cout<<"bias_time: " <<bias_time<<std::endl;
   float timeDelay =  bias_time/1000 + time_acc;//  time_acc--子弹飞行时间 
   //当前相机观测到的装甲板相对于 odom坐标系 的坐标
   float tar_yaw = yaw;
@@ -193,10 +223,11 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
   int idx = 0;  
 
   //以下 存在一个 大的 if else 判断 当检测到目标转速较低时瞄准摄像头看见的那块装甲板，高转速再建模预测
-  if(fabsf(v_yaw) < 3.0){
-    if(v > 0.08){ 
-      // std::cout<<"i am in here" << std::endl;
-      if(fabsf(v_yaw) < 1.8){
+  if(fabsf(v_yaw) < vyaw_if_fast){
+    if(v > 0.2){ 
+      std::cout<<"i am in here" << std::endl;
+      if(fabsf(v_yaw) < 1.8 || fabs(v_yaw > 20)) // 排除异常项
+      {
         v_yaw = 0;
       }
       float vx = v_yaw * r1 * sin(tar_yaw);
@@ -209,19 +240,137 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
       
       pre_aim[0].yaw = tar_yaw + v_yaw * timeDelay;
     }else{
+      if(armors_num==4)
+      {
+          // std::cout<<"i am in here" << std::endl;
+        for (i = 0; i < 4; i++)
+        {
+          float tmp_yaw = tar_yaw + i * pi / 2.0f;
+          float r = use_1 ? r1 : r2;
+          tar_position[i].x = xw - r * cos(tmp_yaw);
+          tar_position[i].y = yw - r * sin(tmp_yaw);
+          tar_position[i].z = use_1 ? zw : dz + zw;
+          tar_position[i].yaw = tar_yaw + i * pi / 2.0f;
+          // if(tar_position[i].yaw > pi){
+          //   tar_position[i].yaw -=2 *pi;
+          // }
+          limit_yaw_range(tar_position[i].yaw);
+          float pre_tmp_yaw = tmp_yaw + v_yaw * timeDelay;
+          pre_aim[i].x =xw + vxw * timeDelay  - r * cos(pre_tmp_yaw);
+          pre_aim[i].y =yw + vyw * timeDelay  - r * sin(pre_tmp_yaw);
+          pre_aim[i].z =tar_position[i].z ;//+ vzw * timeDelay;
+          pre_aim[i].yaw = tar_position[i].yaw + v_yaw * timeDelay;
+          limit_yaw_range(pre_aim[i].yaw);
+          use_1 = !use_1;
+          // std::cout<<"i: "<<i<<std::endl;
+          // std::cout<<"pre_aim[i].yaw: "<<pre_aim[i].yaw*57.2957<<std::endl;
+        }
+
+        // 2种常见决策方案：
+        // 1.计算枪管到目标装甲板yaw最小的那个装甲板
+        // 2.计算距离最近的装甲板
+
+        //计算距离最近的装甲板
+        //	float dis_diff_min = sqrt(tar_position[0].x * tar_position[0].x + tar_position[0].y * tar_position[0].y);
+        //	fire = pre_aim[idx].yaw;
+        //	for (i = 1; i<4; i++)
+        //	{
+        //		float temp_dis_diff = sqrt(tar_position[i].x * tar_position[0].x + tar_position[i].y * tar_position[0].y);
+        //		if (temp_dis_diff < dis_diff_min)
+        //		{
+        //			dis_diff_min = temp_dis_diff;
+        //			idx = i;
+        //		}
+        //	}
+        //
+
+        //计算枪管到目标装甲板yaw最小的那个装甲板
+        if(fabs(v_yaw)<6.6)
+        {
+          yaw_diff_min = fabsf(center_yaw - pre_aim[0].yaw);
+          zero_cross_detector(yaw_diff_min);
+          for (i = 1; i < 4; i++)
+          {
+            float temp_yaw_diff = fabsf(center_yaw- pre_aim[i].yaw);
+            zero_cross_detector(temp_yaw_diff);
+            if (temp_yaw_diff < yaw_diff_min)
+            {
+              yaw_diff_min = temp_yaw_diff;
+              idx = i;
+            }
+          }
+        }
+        else
+        {
+          std::cout<<"i am in here" << std::endl;
+          yaw_diff_min = fabsf(center_yaw - pre_aim[1].yaw);
+          zero_cross_detector(yaw_diff_min);
+          for (i = 3; i < 4; i++)
+          {
+            float temp_yaw_diff = fabsf(center_yaw- pre_aim[i].yaw);
+            zero_cross_detector(temp_yaw_diff);
+            if (temp_yaw_diff < yaw_diff_min)
+            {
+              yaw_diff_min = temp_yaw_diff;
+              idx = i;
+            }
+            else
+            {
+              idx=1;
+            }
+          }
+        }
+      }
+      // else
+      // {
+      //     for (i = 0; i < 3; i++)
+      //   {
+      //     float tmp_yaw = tar_yaw + i *2* pi/3.0f;    
+      //     float r = 0.26;
+      //     tar_position[i].x = xw - r * cos(tmp_yaw);
+      //     tar_position[i].y = yw - r * sin(tmp_yaw);
+      //     tar_position[i].z = zw;
+      //     tar_position[i].yaw = tar_yaw + i * 2 *pi / 3.0f;
+      //     // if(tar_position[i].yaw > pi){
+      //     //   tar_position[i].yaw -=2 *pi;
+      //     // }
+      //     limit_yaw_range(tar_position[i].yaw);
+      //     float pre_tmp_yaw = tmp_yaw + v_yaw * timeDelay;
+      //     pre_aim[i].x =xw + vxw * timeDelay  - r * cos(pre_tmp_yaw);
+      //     pre_aim[i].y =yw + vyw * timeDelay  - r * sin(pre_tmp_yaw);
+      //     pre_aim[i].z =tar_position[i].z ;//+ vzw * timeDelay;
+      //     pre_aim[i].yaw = tar_position[i].yaw + v_yaw * timeDelay;
+      //     limit_yaw_range(pre_aim[i].yaw);
+      //   }
+      //   //计算枪管到目标装甲板yaw最小的那个装甲板
+      //   yaw_diff_min = fabsf(center_yaw - pre_aim[0].yaw);
+      //   zero_cross_detector(yaw_diff_min);
+      //   for (i = 1; i < 3; i++)
+      //   {
+      //     float temp_yaw_diff = fabsf(center_yaw- pre_aim[i].yaw);
+      //     zero_cross_detector(temp_yaw_diff);
+      //     if (temp_yaw_diff < yaw_diff_min)
+      //     {
+      //       yaw_diff_min = temp_yaw_diff;
+      //       idx = i;
+      //     }
+      //   }
+        
+      // }
+
       // std::cout<<"i am in here" << std::endl;
-      float vx = v_yaw * r1 * sin(tar_yaw);
-      float vy = -v_yaw * r1 * cos(tar_yaw);
-      pre_aim[0].x =xw - r1 * cos(tar_yaw) + vxw * timeDelay + vx * timeDelay;
-      pre_aim[0].y =yw - r1 * sin(tar_yaw) + vyw * timeDelay + vy * timeDelay;
-      pre_aim[0].z =zw ;
-      pre_aim[0].yaw = tar_yaw + v_yaw * timeDelay;
+      // float vx = v_yaw * r1 * sin(tar_yaw);
+      // float vy = -v_yaw * r1 * cos(tar_yaw);
+      // pre_aim[0].x =xw - r1 * cos(tar_yaw) + vxw * timeDelay + vx * timeDelay;
+      // pre_aim[0].y =yw - r1 * sin(tar_yaw) + vyw * timeDelay + vy * timeDelay;
+      // pre_aim[0].z =zw ;
+      // pre_aim[0].yaw = tar_yaw + v_yaw * timeDelay;
     }
   }else{
   
   
   //装甲板建模预测
-  int i = 0;
+  // int i = 0;
   // 根据装甲板数目建模
   if (armors_num == 2)
   {
@@ -320,7 +469,7 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
 
     //计算距离最近的装甲板
     //	float dis_diff_min = sqrt(tar_position[0].x * tar_position[0].x + tar_position[0].y * tar_position[0].y);
-    //	int idx = 0;fire = pre_aim[idx].yaw;
+    //	fire = pre_aim[idx].yaw;
     //	for (i = 1; i<4; i++)
     //	{
     //		float temp_dis_diff = sqrt(tar_position[i].x * tar_position[0].x + tar_position[i].y * tar_position[0].y);

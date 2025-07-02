@@ -2,6 +2,9 @@
 // Licensed under the MIT License.
 
 #include <cv_bridge/cv_bridge.h>
+#include <sensor_msgs/Image.h>
+#include "rclcpp/rclcpp.hpp"
+
 #include <rmw/qos_profiles.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/convert.h>
@@ -89,19 +92,51 @@ ArmorDetectorNode::ArmorDetectorNode(const rclcpp::NodeOptions & options)
   img_sub_ = this->create_subscription<sensor_msgs::msg::Image>(
     "/image_raw", rclcpp::SensorDataQoS(),
     std::bind(&ArmorDetectorNode::imageCallback, this, std::placeholders::_1));
+<<<<<<< HEAD:rm_vision/rm_auto_aim-main/rm_auto_aim-main/armor_detector/.history/src/detector_node_20240708143841.cpp
 }
 
+=======
 
+  // task_sub_ = this->create_subscription<std_msgs::msg::Int64>(
+  //   "/task_mode", rclcpp::SensorDataQoS(),
+  //   std::bind(&ArmorDetectorNode::taskCallback, this, std::placeholders::_1));
+  task_sub_ = this->create_subscription<global_interface::msg::SerialTask>(
+    "/serial_task", rclcpp::SensorDataQoS(),
+    std::bind(&ArmorDetectorNode::taskCallback, this, std::placeholders::_1));
+}
+
+void ArmorDetectorNode::taskCallback(const global_interface::msg::SerialTask task_msg)
+{
+  if (task_msg.mode == 0) {
+    is_aim_task_ = true;
+  } else {
+    is_aim_task_ = false;
+  }
+  //std::cout<<"task_mode:"<<task_mode<<std::endl;
+}
+>>>>>>> 75f713b (clean):rm_vision/rm_auto_aim/armor_detector/src/detector_node.cpp
 
 void ArmorDetectorNode::imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr img_msg)
 {
+<<<<<<< HEAD:rm_vision/rm_auto_aim-main/rm_auto_aim-main/armor_detector/.history/src/detector_node_20240708143841.cpp
   
+=======
+
+
+  if(is_aim_task_)
+  {
+>>>>>>> 75f713b (clean):rm_vision/rm_auto_aim/armor_detector/src/detector_node.cpp
   auto armors = detectArmors(img_msg);
       // std::cout<<"_size:"<<armors.size()<<std::endl;
   if(armors.empty()){
       RCLCPP_INFO(this->get_logger(), "no armors!");
+<<<<<<< HEAD:rm_vision/rm_auto_aim-main/rm_auto_aim-main/armor_detector/.history/src/detector_node_20240708143841.cpp
  }
   if (pnp_solver_ != nullptr ) {
+=======
+  }
+  if (pnp_solver_ != nullptr && is_aim_task_ ) {
+>>>>>>> 75f713b (clean):rm_vision/rm_auto_aim/armor_detector/src/detector_node.cpp
     armors_msg_.header = armor_marker_.header = text_marker_.header = img_msg->header;
     armors_msg_.armors.clear();
     marker_array_.markers.clear();
