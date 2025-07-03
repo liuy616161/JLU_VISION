@@ -35,8 +35,6 @@ def generate_launch_description():
                     name='armor_detector',
                     parameters=[node_params],
                     extra_arguments=[{'use_intra_process_comms': True}]
-<<<<<<<< HEAD:rm_vision/rm_vision-main/rm_vision-main/rm_vision_bringup/launch/vision_bringup.launch.py
-========
                 ),
 
                 ComposableNode(
@@ -45,7 +43,6 @@ def generate_launch_description():
                     name='power_rune',
                     parameters=[node_params],
                     extra_arguments=[{'use_intra_process_comms': True}]
->>>>>>>> 75f713b (clean):rm_vision/rm_vision-main/rm_vision_bringup/launch/vision_bringup.launch.py
                 )
             ],
             output='both',

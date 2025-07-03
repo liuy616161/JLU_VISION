@@ -295,7 +295,7 @@ VxInt32 DHDECL DxSharpen24B(void* pInputBuffer, void* pOutputBuffer, VxUint32 nW
 \param  pInputBuffer	[in] input buffer      
 \param  pOutputBuffer	[out]output buffer
 \param  nImageSize     	[in] image size (width * height)
-\param  nFactor        	[in] factor,range(0 ~ 1)
+\param  nFactor        	[in] factor,range(0 ~ 128)
 
 \return emStatus   
 */

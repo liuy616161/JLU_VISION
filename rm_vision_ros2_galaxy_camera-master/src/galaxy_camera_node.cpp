@@ -230,8 +230,6 @@ private:
     GX_STATUS status;
     param_desc.integer_range.resize(1);
     param_desc.integer_range[0].step = 1;
-<<<<<<< HEAD
-=======
 
     // 带宽
     status = GXSetEnum(camera_handle_, GX_ENUM_DEVICE_LINK_THROUGHPUT_LIMIT_MODE, GX_DEVICE_LINK_THROUGHPUT_LIMIT_MODE_OFF);
@@ -262,7 +260,6 @@ private:
 
 
 
->>>>>>> 75f713b (clean)
     // Exposure time
     param_desc.description = "Exposure time in microseconds";    // 微妙
     GXGetFloat(camera_handle_, GX_FLOAT_EXPOSURE_TIME, &f_value);        // 获取浮点类型值的当前值
@@ -395,8 +392,6 @@ private:
 
   int et = 2800;
   int last_et =2800;
-<<<<<<< HEAD
-=======
 
 
   int gn = 6.0;
@@ -404,7 +399,6 @@ private:
 
 
 
->>>>>>> 75f713b (clean)
   int fail_conut_ = 0;
   std::thread capture_thread_;
 
