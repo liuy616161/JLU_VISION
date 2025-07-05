@@ -35,7 +35,7 @@ std::vector<Armor> Detector::detect(const cv::Mat & input)
     classifier->extractNumbers(input, armors_);
     classifier->classify(armors_);
      if (corner_corrector != nullptr) {
-      corner_corrector->correctCorners(armors_, gray_img_);
+      //corner_corrector->correctCorners(armors_, gray_img_);
     }
   }
 

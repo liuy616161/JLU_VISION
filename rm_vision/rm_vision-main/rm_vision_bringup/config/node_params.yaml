@@ -6,9 +6,9 @@
 
 /serial_driver:
   ros__parameters:
-    exposure_time_aim: 2800
+    exposure_time_aim: 3800
     exposure_time_buff: 700
-    gain_aim: 6.0
+    gain_aim: 16.0
     gain_buff: 2.0
     timestamp_offset: 0.01
     device_name: /dev/ttyACM0
