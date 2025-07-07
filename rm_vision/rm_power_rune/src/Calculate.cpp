@@ -75,6 +75,20 @@ void Calculator::preprocess(const Frame &frame, std::vector<cv::Point2f> &camera
 bool Calculator::matrixCal() {
     // 进行坐标变换并设置旋转矩阵
     m_matW2C = world2Camera(m_worldPoints, m_cameraPoints, Param::INTRINSIC_MATRIX, Param::DIST_COEFFS);
+
+    //测试m_matW2c是否正确
+#if CONSOLE_OUTPUT >= 2
+    MUTEX.lock();   
+    std::cout << "m_matW2C: " << std::endl;
+    for (int i = 0; i < m_matW2C.rows; ++i) {
+        for (int j = 0; j < m_matW2C.cols; ++j) {
+            std::cout << m_matW2C.at<double>(i, j) << " ";
+        }
+        std::cout << std::endl;
+    }
+    MUTEX.unlock();
+#endif
+
     m_matC2G =
         camera2Gimbal(Param::CAMERA_TO_GIMBAL_ROTATION_VECTOR, Param::CAMERA_TO_GIMBAL_TRANSLATION_VECTOR);
     m_matG2R =
@@ -133,6 +147,18 @@ void Calculator::angleCal() {
     m_angleRel = angleAbs - m_totalShift * Param::ANGLE_BETWEEN_FAN_BLADES;
     double time{std::chrono::duration_cast<std::chrono::microseconds>(m_frameTime - m_startTime).count() /
                 1e6};
+    // 输出angelAbs,m_angleRel和time到txt文件中
+#if CONSOLE_OUTPUT >= 2
+            MUTEX.lock();
+            static int angle_cnt = 0;
+            std::ofstream ofs("angle_data.txt", std::ios::app);
+            ofs << "angle data: "<< ++angle_cnt << std::endl;
+            ofs << "angleAbs: " << angleAbs << ", m_angleRel: " << m_angleRel << ", time: " << time
+                << ", totalShift: " << m_totalShift << std::endl;
+            ofs << std::endl;
+            ofs.close();
+            MUTEX.unlock();
+#endif
     // 存储相对于第一次识别的时间间隔和角度的绝对值，日后进行拟合
     if (Param::MODE == Mode::BIG) {
         std::unique_lock lock(m_mutex);
@@ -149,6 +175,19 @@ void Calculator::directionCal() {
         if ((int)m_directionData.size() >= m_directionThresh) {
             // 计算角度差并投票
             int stable = 0, anti = 0, clockwise = 0;
+            //输出m_directionData到txt中以供检查
+#if CONSOLE_OUTPUT >= 2
+            MUTEX.lock();
+            static int count = 0;
+            std::ofstream ofs("direction_data.txt", std::ios::app);
+            ofs << "direction data: "<< ++count << std::endl;
+            for (const auto &data : m_directionData) {
+                ofs << data << " ";
+            }
+            ofs << std::endl;
+            ofs.close();
+            MUTEX.unlock();
+#endif
             for (size_t i = 0; i < m_directionData.size() / 2; ++i) {
                 auto temp{m_directionData.at(i + m_directionData.size() / 2) - m_directionData.at(i)};
                 if (temp > +1.5e-2) {
