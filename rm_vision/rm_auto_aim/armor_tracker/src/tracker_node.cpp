@@ -471,17 +471,19 @@ void ArmorTrackerNode::armorsCallback(const auto_aim_interfaces::msg::Armors::Sh
       
       
       float distance = std::sqrt((*(target_pub.aim_x))*(*(target_pub.aim_x)) + (*(target_pub.aim_y))*(*(target_pub.aim_y)));
-      // std::cout<< "distan:"<< distance;
+
       
-      //target_pub.pitch = trajectory(22.7, distance, *(target_pub.aim_z)) + pitch_diff;//正常的弹道解算
+       //std::cout<< "distan:"<< distance;
+      
+      target_pub.pitch = trajectory(22.7, distance, *(target_pub.aim_z)) + pitch_diff;//正常的弹道解算
         // RCLCPP_INFO(this->get_logger(),"yaw_change");
-      
+      /*
       // //控制pnp因距离远近 或 v_yaw 大小 带来的aim_z误差，
       if(distance > 3.0 && distance < 5.8){
         // diff_control = 0.01+0.02*((distance-3)/3); //0.02*((distance-3)/3); //在3米以外，随距离增加，解算误差增大速度也加快
         diff_control = 0.6 + 0.3*((distance-3)/2.8); //0.02*((distance-3)/3); //在3米以外，随距离增加，解算误差增大速度也加快
         if(fabsf(target_pub.get_v_yaw) > 4){
-        RCLCPP_INFO(this->get_logger(),"yaw_change");
+        // RCLCPP_INFO(this->get_logger(),"yaw_change");
 
         diff_control = 0.6 + 0.4*((distance-3)/2.8); //0.02*((distance-3)/3); //在3米以外，随距离增加，解算误差增大速度也加快
         }
@@ -501,12 +503,14 @@ void ArmorTrackerNode::armorsCallback(const auto_aim_interfaces::msg::Armors::Sh
         target_pub.pitch = trajectory(22.7, distance, *(target_pub.aim_z))+diff_control+ pitch_diff;
       }
 
+      target_pub.pitch = trajectory(22.7, distance, *(target_pub.aim_z))+ pitch_diff;
 
+      */
       //弧度转角度  
       // float yaw_change = time_delay_set * 0.5;
       // RCLCPP_INFO(this->get_logger(),"yaw_change:%f",yaw_change);
 
-      if(((fabsf(target_pub.get_v_yaw)> 8.8 )&&(v < 0.5)) || (distance > 4.2 && fabsf(target_pub.get_v_yaw)> 2.5) ){
+      if(((fabsf(target_pub.get_v_yaw)> 10.0 )&&(v < 0.5)) || (distance > 6.2 && fabsf(target_pub.get_v_yaw)> 2.5) ){
         std::cout<<"rotate"<<std::endl;
         target_pub.yaw = (float)(atan2(target_pub.get_position_y, target_pub.get_position_x))*57.2957 + yaw_diff  ;
 
@@ -546,6 +550,9 @@ void ArmorTrackerNode::armorsCallback(const auto_aim_interfaces::msg::Armors::Sh
 
       }
 
+
+
+
     //
     // if(armors_num == 2 && (!armors_msg->armors.empty())){
     // target_pub.yaw = (float)(atan2(*(target_pub.aim_y), *(target_pub.aim_x)))*57.29577 + yaw_diff ; 
@@ -567,7 +574,7 @@ void ArmorTrackerNode::armorsCallback(const auto_aim_interfaces::msg::Armors::Sh
         mv_yaw += 360;
       }
 
-      RCLCPP_INFO(this->get_logger(),"mv_yaw:%f",mv_yaw);
+      // RCLCPP_INFO(this->get_logger(),"mv_yaw:%f",mv_yaw);
       if(abs(mv_yaw) > 1.1){
         //  std::cout<<"!!!!!abs(mv_yaw) > 1.1!!!!!"<<std::endl;
       }

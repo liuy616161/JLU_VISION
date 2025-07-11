@@ -169,7 +169,7 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
   float static_z = 0.00;
   // 线性预测
   float algorithm_time = 5; //可以通过latency查看
-  float respond_time = 0;   //可以通过打小陀螺测试得到
+  float respond_time = 5;   //可以通过打小陀螺测试得到
 
   // if(fabsf(v_yaw) > 6.0){
   //     //对于高速旋转的目标，采取秒准中心的策略，respond_time 理应更少
@@ -179,8 +179,10 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
   int i = 0;
   float center_yaw = (float)(atan2(yw, xw));
 
+  // std::cout<<"center_yaw"<<center_yaw<<std::endl;
 
-  float vyaw_speed_n = 8.8;
+
+  float vyaw_speed_n = 10.0;
   float vyaw_speed_s = -vyaw_speed_n;
   float vyaw_if_fast = abs(vyaw_speed_n);
   if(v_yaw > vyaw_speed_n){
@@ -213,8 +215,8 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
 
   //以下 存在一个 大的 if else 判断 当检测到目标转速较低时瞄准摄像头看见的那块装甲板，高转速再建模预测
   if(fabsf(v_yaw) < vyaw_if_fast){
-    if(v > 0.2){ 
-      std::cout<<"i am in here" << std::endl;
+    if(v > 2){ 
+       std::cout<<"i am in here" << std::endl;
       if(fabsf(v_yaw) < 1.8 || fabs(v_yaw > 20)) // 排除异常项
       {
         v_yaw = 0;
@@ -235,6 +237,7 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
         for (i = 0; i < 4; i++)
         {
           float tmp_yaw = tar_yaw + i * pi / 2.0f;
+          // std::cout<<"tmp_yaw: "<<tmp_yaw<<std::endl;
           float r = use_1 ? r1 : r2;
           tar_position[i].x = xw - r * cos(tmp_yaw);
           tar_position[i].y = yw - r * sin(tmp_yaw);
@@ -274,12 +277,13 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
         //
 
         //计算枪管到目标装甲板yaw最小的那个装甲板
-        if(fabs(v_yaw)<6.6)
+        if(fabs(v_yaw)<10.0)
         {
           yaw_diff_min = fabsf(center_yaw - pre_aim[0].yaw);
           zero_cross_detector(yaw_diff_min);
           for (i = 1; i < 4; i++)
           {
+            // std::cout<<"pre_aim[i].yaw "<<pre_aim[i].yaw<<std::endl;
             float temp_yaw_diff = fabsf(center_yaw- pre_aim[i].yaw);
             zero_cross_detector(temp_yaw_diff);
             if (temp_yaw_diff < yaw_diff_min)
@@ -291,7 +295,7 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
         }
         else
         {
-          std::cout<<"i am in here" << std::endl;
+          // std::cout<<"i am in here" << std::endl;
           yaw_diff_min = fabsf(center_yaw - pre_aim[1].yaw);
           zero_cross_detector(yaw_diff_min);
           for (i = 3; i < 4; i++)
@@ -309,6 +313,7 @@ void PredictPitchXY::GimbalControlTransform(float xw, float yw, float zw, float 
             }
           }
         }
+    std::cout<<"pre_aim:"<<pre_aim[idx].x<<"                   "<<pre_aim[idx].y<<"           "<<pre_aim[idx].z<<std::endl;
       }
       // else
       // {

@@ -36,7 +36,6 @@ NumberClassifier::NumberClassifier(
   while (std::getline(label_file, line)) {
     class_names_.push_back(line);
   }
-  std::cout<<"model init"<<std::endl;
 }
 
 void NumberClassifier::extractNumbers(const cv::Mat & src, std::vector<Armor> & armors)
@@ -49,7 +48,6 @@ void NumberClassifier::extractNumbers(const cv::Mat & src, std::vector<Armor> & 
   const int large_armor_width = 54;
   // Number ROI size
   const cv::Size roi_size(20, 28);
-static const cv::Size input_size(28, 28);
 
   for (auto & armor : armors) {
     // Warp perspective transform
@@ -79,49 +77,15 @@ static const cv::Size input_size(28, 28);
     // Binarize
     cv::cvtColor(number_image, number_image, cv::COLOR_RGB2GRAY);
     cv::threshold(number_image, number_image, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-    cv::resize(number_image, number_image, input_size);
+
+
+//static const cv::Size input_size(28, 28);
+
+    //cv::resize(number_image, number_image, input_size);
 
 
     armor.number_img = number_image;
   }
-/*
-  cv::Mat NumberClassifier::extractNumber(const cv::Mat &src, const Armor &armor) const noexcept {
-// Light length in image
-static const int light_length = 12;
-// Image size after warp
-static const int warp_height = 28;
-static const int small_armor_width = 32;
-static const int large_armor_width = 54;
-// Number ROI size
-static const cv::Size roi_size(20, 28);
-static const cv::Size input_size(28, 28);
-
-// Warp perspective transform
-cv::Point2f lights_vertices[4] = {
-armor.left_light.bottom, armor.left_light.top, armor.right_light.top, armor.right_light.bottom};
-
-const int top_light_y = (warp_height - light_length) / 2 - 1;
-const int bottom_light_y = top_light_y + light_length;
-const int warp_width = armor.type == ArmorType::SMALL ? small_armor_width : large_armor_width;
-cv::Point2f target_vertices[4] = {
-cv::Point(0, bottom_light_y),
-cv::Point(0, top_light_y),
-cv::Point(warp_width - 1, top_light_y),
-cv::Point(warp_width - 1, bottom_light_y),
-};
-cv::Mat number_image;
-auto rotation_matrix = cv::getPerspectiveTransform(lights_vertices, target_vertices);
-cv::warpPerspective(src, number_image, rotation_matrix, cv::Size(warp_width, warp_height));
-
-// Get ROI
-number_image = number_image(cv::Rect(cv::Point((warp_width - roi_size.width) / 2, 0), roi_size));
-
-// Binarize
-cv::cvtColor(number_image, number_image, cv::COLOR_RGB2GRAY);
-cv::threshold(number_image, number_image, 0, 255, cv::THRESH_BINARY | cv::THRESH_OTSU);
-cv::resize(number_image, number_image, input_size);
-return number_image;
-*/
 }
 
 void NumberClassifier::classify(std::vector<Armor> & armors)
@@ -136,16 +100,21 @@ void NumberClassifier::classify(std::vector<Armor> & armors)
     cv::Mat blob;
     cv::dnn::blobFromImage(image, blob);
 
-
     // Set the input blob for the neural network
     net_.setInput(blob);
     // Forward pass the image blob through the model
-    cv::Mat outputs = net_.forward().clone();
+    cv::Mat outputs = net_.forward();
 
+    // Do softmax
+    float max_prob = *std::max_element(outputs.begin<float>(), outputs.end<float>());
+    cv::Mat softmax_prob;
+    cv::exp(outputs - max_prob, softmax_prob);
+    float sum = static_cast<float>(cv::sum(softmax_prob)[0]);
+    softmax_prob /= sum;
 
     double confidence;
     cv::Point class_id_point;
-    minMaxLoc(outputs.reshape(1, 1), nullptr, &confidence, nullptr, &class_id_point);
+    minMaxLoc(softmax_prob.reshape(1, 1), nullptr, &confidence, nullptr, &class_id_point);
     int label_id = class_id_point.x;
 
     armor.confidence = confidence;

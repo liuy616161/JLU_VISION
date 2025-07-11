@@ -105,6 +105,8 @@ void resetRoi(cv::Rect& rect, const cv::Rect2f& lastRoi);
 void resetRoi(cv::Rect2f& rect, int rows, int cols);
 bool inRect(const cv::Point2f& point, const cv::Rect2f& rect);
 
+// cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(5, 5));
+
 /**
  * @brief 检测类，负责对图像的处理和目标的检测，得到所有特征点的像素坐标，以及点亮的装甲板数目。
  */

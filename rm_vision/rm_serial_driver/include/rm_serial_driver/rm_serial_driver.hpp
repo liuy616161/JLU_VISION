@@ -55,16 +55,16 @@ private:
   void buffMsgCallback(global_interface::msg::Buff::SharedPtr buff_msg);
 
   //exposure time
-  int64_t aim_et_         =   5000;
-  int64_t buff_et_        =   700;
-  int64_t previous_exposure_time_ = 1000;
-  int64_t current_exposure_time_ = 1000;
+  int aim_et_         =   3000;
+  int buff_et_        =   2000;
+  int previous_exposure_time_ = 1000;
+  int current_exposure_time_ = 1000;
 
 
-  int64_t aim_gn_ = 16.0;
-  int64_t buff_gn_ = 3.0;
-  int64_t previous_gain_ = 8.0;
-  int64_t current_gain_ = 8.0;
+  int aim_gn_ = 8.0;
+  int buff_gn_ = 3.0;
+  int previous_gain_ = 8.0;
+  int current_gain_ = 8.0;
 
   
   rclcpp::Publisher<std_msgs::msg::Int64>::SharedPtr exposure_time_pub_;

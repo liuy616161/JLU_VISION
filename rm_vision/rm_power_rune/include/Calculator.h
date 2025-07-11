@@ -31,7 +31,7 @@ class Calculator {
     void preprocess(const Frame &frame, std::vector<cv::Point2f> &cameraPoints);
     bool matrixCal();
     void setFirstDetect();
-    void angleCal();
+    bool angleCal();
     void directionCal();
     bool predict();
     void fit();
@@ -69,6 +69,9 @@ class Calculator {
     int m_directionThresh;
     std::thread m_fitThread;
     std::shared_mutex m_mutex;
+
+
+
 };
 
 /**

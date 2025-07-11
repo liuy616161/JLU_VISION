@@ -346,6 +346,14 @@ void Detector::drawTargetPoint(const cv::Point2f& point) {
  * @return false
  */
 void findArrowLightlines(const cv::Mat& binary, std::vector<Lightline>& lightlines, const cv::Rect2f& roi) {
+
+    // cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(8, 8));
+	// cv::erode(binary, binary, element);
+
+
+
+
+
     // 寻找轮廓
     std::vector<std::vector<cv::Point>> contours;
     cv::findContours(binary, contours, cv::RETR_LIST, cv::CHAIN_APPROX_SIMPLE);

@@ -215,16 +215,13 @@ std::unique_ptr<Detector> ArmorDetectorNode::initDetector()
 
   // Init classifier
   auto pkg_path = ament_index_cpp::get_package_share_directory("armor_detector");
-  auto model_path = pkg_path + "/model/lenet.onnx";
+  auto model_path = pkg_path + "/model/mlp.onnx";
   auto label_path = pkg_path + "/model/label.txt";
   double threshold = this->declare_parameter("classifier_threshold", 0.7);
   std::vector<std::string> ignore_classes =
     this->declare_parameter("ignore_classes", std::vector<std::string>{"negative"});
   detector->classifier =
     std::make_unique<NumberClassifier>(model_path, label_path, threshold, ignore_classes);
-
-  detector->corner_corrector = std::make_unique<LightCornerCorrector>();
-
 
   return detector;
 }

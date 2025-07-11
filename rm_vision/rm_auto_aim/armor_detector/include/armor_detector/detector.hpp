@@ -19,7 +19,6 @@
 #include "armor_detector/number_classifier.hpp"
 #include "auto_aim_interfaces/msg/debug_armors.hpp"
 #include "auto_aim_interfaces/msg/debug_lights.hpp"
-#include "armor_detector/light_corner_corrector.hpp"
 
 namespace rm_auto_aim
 {
@@ -65,11 +64,9 @@ public:
   ArmorParams a;
 
   std::unique_ptr<NumberClassifier> classifier;
-  std::unique_ptr<LightCornerCorrector> corner_corrector;
 
   // Debug msgs
   cv::Mat binary_img;
-  cv::Mat gray_img_;
   auto_aim_interfaces::msg::DebugLights debug_lights;
   auto_aim_interfaces::msg::DebugArmors debug_armors;
 

@@ -159,8 +159,15 @@ public:
             case GX_PIXEL_FORMAT_BAYER_RG8: bayer_type = BAYERRG; break;
             case GX_PIXEL_FORMAT_BAYER_GB8: bayer_type = BAYERGB; break;
             case GX_PIXEL_FORMAT_BAYER_BG8: bayer_type = BAYERBG; break;
-            default: RCLCPP_FATAL(this->get_logger(), "Unsupported Bayer layout: %d!", bayer_frame.nPixelFormat); return;
+            default: RCLCPP_FATAL(this->get_logger(), "Unsupported Bayer layout: %d!", bayer_frame.nPixelFormat); continue;
           }
+
+
+          // double f_value_;
+          // GXGetFloat(camera_handle_, GX_FLOAT_EXPOSURE_TIME, &f_value_);
+          // std::cout<<f_value_<<std::endl;
+          // GXGetFloat(camera_handle_, GX_FLOAT_GAIN, &f_value_);
+          // std::cout<<f_value_<<std::endl;
 
           image_msg_.header.stamp = this->now();
           image_msg_.height = bayer_frame.nHeight;

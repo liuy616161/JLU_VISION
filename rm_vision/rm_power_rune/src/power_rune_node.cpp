@@ -6,12 +6,8 @@
 namespace power_rune{
 
 
-    PowerRuneNode::PowerRuneNode(const rclcpp::NodeOptions & options):
-    Node("power_rune_node", options),
-          last_save_time_(this->now()),
-          video_writer_initialized_(false),
-          video_counter_(0),
-          last_mode_(0)
+    PowerRuneNode::PowerRuneNode(const rclcpp::NodeOptions & options)
+    : Node("power_rune_node", options)
     {
         
 
@@ -58,7 +54,7 @@ namespace power_rune{
             "/serial_msg", rclcpp::SensorDataQoS(),
             std::bind(&PowerRuneNode::serial_callback, this, std::placeholders::_1));
 
-        #if SHOW_IMAGE>=1
+    #if SHOW_IMAGE>=1
         image_show_pub_=this->create_publisher<sensor_msgs::msg::Image>("img_show",10);
         image_armor_pub_=this->create_publisher<sensor_msgs::msg::Image>("img_armor",10);
         image_arrow_pub_=this->create_publisher<sensor_msgs::msg::Image>("img_arrow",10);
@@ -68,10 +64,15 @@ namespace power_rune{
             std::chrono::milliseconds(10),
             std::bind(&PowerRuneNode::publish_debug_img,this)
         );
-        #endif
+    #endif
 
+    #if RECORD==1
+    
+          video_writer_initialized_=false;
+          video_counter_=0;
+          last_mode_=0;
         last_save_time_ = this->now();
-
+    #endif
 
     }
 
@@ -94,47 +95,55 @@ namespace power_rune{
     
     void PowerRuneNode::task_callback(const global_interface::msg::SerialTask task_msg)
     {
-        last_mode_ = rune_task_mode; // 保存上一次模式
+
         Param::COLOR=task_msg.color? power_rune::Color::RED : power_rune::Color::BLUE;
         if(task_msg.mode!=0){
             Param::MODE=static_cast<power_rune::Mode>(task_msg.mode-1);
             rune_task_mode=task_msg.mode;
         }
         else rune_task_mode=0;
+
+
+        
         Param::DIRECTION = task_msg.is_stable ?
                             power_rune::Direction::STABLE :
                             static_cast<power_rune::Direction>(task_msg.direction + 2);
+        
+    
     }   
 
    
     void PowerRuneNode::imageCallback(const sensor_msgs::msg::Image::ConstSharedPtr img_msg)
     {   
         if(rune_task_mode==0){
-            if(video_writer_.isOpened()){
-                video_writer_.release();
-                video_writer_initialized_ = false;
-                RCLCPP_INFO(this->get_logger(), "视频已保存并关闭");
-            }
+            #if RECORD==1         
+                if(video_writer_.isOpened()){
+                    video_writer_.release();
+                    video_writer_initialized_ = false;
+                    RCLCPP_INFO(this->get_logger(), "视频已保存并关闭");
+                }
+            #endif 
             return;
         }           
+                
 
         auto img = cv_bridge::toCvShare(img_msg, "rgb8")->image;
         cv::Mat imgbgr=img.clone();
         auto start{std::chrono::steady_clock::now()};
         cv::cvtColor(imgbgr,imgbgr,cv::COLOR_RGB2BGR);
-        
-        //std::cout<<"image width:"<<imgbgr.cols<<"   image height:"<<imgbgr.rows<<std::endl;
 
+    #if RECORD==1
         if (last_mode_ == 0 && rune_task_mode != 0) {
             video_counter_++; 
             video_writer_initialized_ = false; 
             RCLCPP_INFO(this->get_logger(), "模式从 0 切换到 %d，开始新的视频记录", rune_task_mode);
+            last_mode_=rune_task_mode;
         }
         
         rclcpp::Time current_time = this->now();
         auto seconds=current_time.seconds();
 
-
+        
         if (!video_writer_initialized_ && !imgbgr.empty()) {
             std::string video_path = "/home/tars-go/rune_video/" + std::to_string(video_counter_)+":"+std::to_string(seconds) + ".avi";
             int fourcc = cv::VideoWriter::fourcc('M', 'J', 'P', 'G'); // 编码格式
@@ -155,8 +164,8 @@ namespace power_rune{
             }
             last_save_time_ = current_time; // 更新上次保存时间
         }
-
-
+    #endif
+        //std::cout<<"image width:"<<imgbgr.cols<<"   image height:"<<imgbgr.rows<<std::endl;
 
         if(power_rune_->runOnce(imgbgr, pitch_, yaw_, 0.0)==false){
 
@@ -196,9 +205,11 @@ namespace power_rune{
 
         buff_pub_->publish(buff_msg);
 
+        auto future_time = start + std::chrono::milliseconds(1000 / power_rune::Param::FPS);
+        if (std::chrono::steady_clock::now() < future_time) {
+            std::this_thread::sleep_until(future_time);
+        }    
         
-
-
         
     }
 

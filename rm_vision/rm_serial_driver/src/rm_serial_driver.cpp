@@ -40,7 +40,7 @@ namespace rm_serial_driver
     pitch_imu_ = this->create_publisher<std_msgs::msg::Float64>("/pitch_imu_msg", 10);
     sentry_decision_pub_ = this->create_publisher<std_msgs::msg::Int8>("sentry_decision",10);
     exposure_time_pub_ = this->create_publisher<std_msgs::msg::Int64>("/exposure_time",10);
-
+    // decision_pub_ = this->create_publisher<std_msgs::msg::Int64>("/decision_msg",10);
 
     aim_et_ = this->declare_parameter("exposure_time_aim", 2800);
     buff_et_ = this->declare_parameter("exposure_time_buff", 6800);
@@ -423,7 +423,7 @@ void RMSerialDriver::buffMsgCallback(global_interface::msg::Buff::SharedPtr buff
 
     std::vector<uint8_t> data = toVector(packet);
     serial_driver_->port()->send(data);
-    // std::cout<<"send finish"<<std::endl;
+    // std::cout<<"send finish"<<std::endl; 
   }
   
 }

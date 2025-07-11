@@ -10,6 +10,7 @@
 #include <opencv2/opencv.hpp>
 #include <std_msgs/msg/int64.hpp>
 #include "PowerRune.h"
+#include "Param.h"
 #include "global_interface/msg/serial.hpp"
 #include "global_interface/msg/buff.hpp"
 #include "global_interface/msg/serial_task.hpp"
@@ -20,16 +21,8 @@ class PowerRuneNode : public rclcpp::Node
 {
 public:
     PowerRuneNode(const rclcpp::NodeOptions & options);
-
-
-    ~PowerRuneNode() {
-        if (video_writer_.isOpened()) {
-            video_writer_.release();
-            RCLCPP_INFO(this->get_logger(), "视频写入器已释放");
-        }
-    }
 private:
-    
+#if RECORD==1
       // 添加上次保存时间的成员变量
     rclcpp::Time last_save_time_;
     cv::VideoWriter video_writer_; // 视频写入器
@@ -39,6 +32,7 @@ private:
     int last_mode_; // 记录上一次的 rune_task_mode
 
     const double SAVE_INTERVAL = 1.0/save_fps_;  // 单位：秒
+#endif
     
     // 任务回调函数
     void task_callback(const global_interface::msg::SerialTask task_msg); 

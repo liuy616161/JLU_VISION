@@ -31,7 +31,6 @@ public:
   double threshold;
 
 private:
-  std::mutex mutex_;
   cv::dnn::Net net_;
   std::vector<std::string> class_names_;
   std::vector<std::string> ignore_classes_;

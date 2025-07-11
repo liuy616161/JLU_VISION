@@ -34,9 +34,6 @@ std::vector<Armor> Detector::detect(const cv::Mat & input)
   if (!armors_.empty()) {
     classifier->extractNumbers(input, armors_);
     classifier->classify(armors_);
-     if (corner_corrector != nullptr) {
-      //corner_corrector->correctCorners(armors_, gray_img_);
-    }
   }
 
   return armors_;
@@ -44,10 +41,12 @@ std::vector<Armor> Detector::detect(const cv::Mat & input)
 
 cv::Mat Detector::preprocessImage(const cv::Mat & rgb_img)
 {
-  cv::cvtColor(rgb_img, gray_img_, cv::COLOR_RGB2GRAY);
+  cv::Mat gray_img;
+  cv::cvtColor(rgb_img, gray_img, cv::COLOR_RGB2GRAY);
 
   cv::Mat binary_img;
-  cv::threshold(gray_img_, binary_img, binary_thres, 255, cv::THRESH_BINARY);
+  cv::threshold(gray_img, binary_img, binary_thres, 255, cv::THRESH_BINARY);
+  // cv::imshow("binary", binary_img);
 
   return binary_img;
 }

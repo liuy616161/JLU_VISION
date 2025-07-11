@@ -16,7 +16,15 @@ namespace power_rune {
  * 4: detect failure
  */
 
-#define CONSOLE_OUTPUT 5
+#define CONSOLE_OUTPUT 2
+
+
+
+/**
+ * 0 not save video
+ * 1 save
+ */
+#define RECORD 1
 
 struct Param {
     Param() = default;

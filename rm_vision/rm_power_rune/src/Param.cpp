@@ -25,7 +25,7 @@ void Param::load(const std::string& filename) {
         throw std::runtime_error("unknown color " + colorStr);
     }
     DRAW_COLOR = COLOR == Color::BLUE ? RED : BLUE;
-
+    /*
     // direction
     std::string directionStr;
     fs["direction"] >> directionStr;
@@ -40,6 +40,7 @@ void Param::load(const std::string& filename) {
     } else {
         throw std::runtime_error("unknown direction " + directionStr);
     }
+    */
     // fps
     fs["fps"] >> FPS;
     // image width and height

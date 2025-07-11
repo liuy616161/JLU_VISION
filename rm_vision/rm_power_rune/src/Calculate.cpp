@@ -41,15 +41,21 @@ Calculator::~Calculator() {
 bool Calculator::calculate(const Frame &frame, std::vector<cv::Point2f> &cameraPoints) {
     preprocess(frame, cameraPoints);
     if (matrixCal() == false) {
+        // std::cout<<"1"<<std::endl;
         return false;
     }
     setFirstDetect();
-    angleCal();
-    directionCal();
+    m_direction=Param::DIRECTION;
+    if(angleCal()==false){
+        return false;
+    };
+    //directionCal();
     if (m_direction == Direction::UNKNOWN) {
+        // std::cout<<"2"<<std::endl;
         return false;
     }
     if (predict() == false) {
+        // std::cout<<"3"<<std::endl;
         return false;
     }
     return true;
@@ -75,20 +81,6 @@ void Calculator::preprocess(const Frame &frame, std::vector<cv::Point2f> &camera
 bool Calculator::matrixCal() {
     // 进行坐标变换并设置旋转矩阵
     m_matW2C = world2Camera(m_worldPoints, m_cameraPoints, Param::INTRINSIC_MATRIX, Param::DIST_COEFFS);
-
-    //测试m_matW2c是否正确
-#if CONSOLE_OUTPUT >= 2
-    MUTEX.lock();   
-    std::cout << "m_matW2C: " << std::endl;
-    for (int i = 0; i < m_matW2C.rows; ++i) {
-        for (int j = 0; j < m_matW2C.cols; ++j) {
-            std::cout << m_matW2C.at<double>(i, j) << " ";
-        }
-        std::cout << std::endl;
-    }
-    MUTEX.unlock();
-#endif
-
     m_matC2G =
         camera2Gimbal(Param::CAMERA_TO_GIMBAL_ROTATION_VECTOR, Param::CAMERA_TO_GIMBAL_TRANSLATION_VECTOR);
     m_matG2R =
@@ -133,12 +125,13 @@ void Calculator::setFirstDetect() {
 /**
  * @brief 角度解算
  */
-void Calculator::angleCal() {
+bool Calculator::angleCal() {
     // 计算相对于第一次检测旋转的角度 angelAbs
     cv::Mat rMatRel{m_rMatW2RBase.inv() * m_rMatW2R};
     double angleAbs{-std::atan2(rMatRel.at<double>(0, 1), rMatRel.at<double>(0, 0))};
     // 减去上一次得到的角度，得到相对于上一次检测旋转的角度
     double angleMinus{angleAbs - m_angleLast};
+
     m_angleLast = angleAbs;
     // 用这个角度除以两片扇叶的夹角，得到装甲板切换数，并计算总的装甲板切换数
     int shift = std::round(angleMinus / Param::ANGLE_BETWEEN_FAN_BLADES);
@@ -147,47 +140,58 @@ void Calculator::angleCal() {
     m_angleRel = angleAbs - m_totalShift * Param::ANGLE_BETWEEN_FAN_BLADES;
     double time{std::chrono::duration_cast<std::chrono::microseconds>(m_frameTime - m_startTime).count() /
                 1e6};
-    // 输出angelAbs,m_angleRel和time到txt文件中
-#if CONSOLE_OUTPUT >= 2
+
+   #if CONSOLE_OUTPUT >= 2
+
+
             MUTEX.lock();
+
+
             static int angle_cnt = 0;
+
+
             std::ofstream ofs("angle_data.txt", std::ios::app);
+
+
             ofs << "angle data: "<< ++angle_cnt << std::endl;
-            ofs << "angleAbs: " << angleAbs << ", m_angleRel: " << m_angleRel << ", time: " << time
-                << ", totalShift: " << m_totalShift << std::endl;
+
+
+            ofs << "                        angleMinus: "<<angleMinus<<"            angleAbs: " << angleAbs << "                         m_angleRel: " << m_angleRel << "                       time: " << time
+                << "                     totalShift: " << m_totalShift << std::endl;
+
             ofs << std::endl;
+
             ofs.close();
+
+
             MUTEX.unlock();
+
+
 #endif
+    if(m_direction==Direction::ANTI_CLOCKWISE&&angleMinus>+1.5e-2) return false;
+    if(m_direction==Direction::CLOCKWISE&&angleMinus<-1.5e-2) return false;
+    
+    
     // 存储相对于第一次识别的时间间隔和角度的绝对值，日后进行拟合
     if (Param::MODE == Mode::BIG) {
         std::unique_lock lock(m_mutex);
         m_fitData.emplace_back(time, std::abs(m_angleRel));
     }
+    return true;
 }
 
 /**
  * @brief 旋转方向解算
  */
 void Calculator::directionCal() {
+           static int count = 0;
+            static int out_cnt=0;
     if (m_direction == Direction::UNKNOWN || m_direction == Direction::STABLE) {
         m_directionData.push_back(m_angleRel);
         if ((int)m_directionData.size() >= m_directionThresh) {
             // 计算角度差并投票
             int stable = 0, anti = 0, clockwise = 0;
-            //输出m_directionData到txt中以供检查
-#if CONSOLE_OUTPUT >= 2
-            MUTEX.lock();
-            static int count = 0;
-            std::ofstream ofs("direction_data.txt", std::ios::app);
-            ofs << "direction data: "<< ++count << std::endl;
-            for (const auto &data : m_directionData) {
-                ofs << data << " ";
-            }
-            ofs << std::endl;
-            ofs.close();
-            MUTEX.unlock();
-#endif
+
             for (size_t i = 0; i < m_directionData.size() / 2; ++i) {
                 auto temp{m_directionData.at(i + m_directionData.size() / 2) - m_directionData.at(i)};
                 if (temp > +1.5e-2) {
@@ -198,18 +202,50 @@ void Calculator::directionCal() {
                     stable++;
                 }
             }
+            int tmp{std::max({stable, clockwise, anti})}; 
             // 得票数最多的为对应旋转方向
-            if (int temp{std::max({stable, clockwise, anti})}; temp == clockwise) {
+            if (tmp == clockwise) {
                 m_direction = Direction::CLOCKWISE;
-            } else if (temp == anti) {
+            } else if (tmp == anti) {
                 m_direction = Direction::ANTI_CLOCKWISE;
             } else {
                 m_direction = Direction::STABLE;
             }
+#if CONSOLE_OUTPUT >= 2
+            MUTEX.lock();
+
+
+
+            std::ofstream ofs("direction_data.txt", std::ios::app);
+
+
+            ofs << "direction data: "<< ++count << "                outside cnt:"<<out_cnt<<std::endl;
+
+            for (size_t i = 0; i < m_directionData.size() / 2; ++i) {
+                auto temp{m_directionData.at(i + m_directionData.size() / 2) - m_directionData.at(i)};
+                ofs<<"               "<<m_directionData.at(i + m_directionData.size() / 2)<<"             "<<m_directionData.at(i)<<"                "<<temp<<std::endl;
+            }
+
+             ofs<<"    clockwise:"<<clockwise<<"    stable:"<<stable<<"            anti"<<anti<<std::endl;
+             ofs<<"    max num:"<<tmp<<std::endl;
+              ofs<< "param: "
+              << (m_direction == Direction::CLOCKWISE        ? "clockwise"
+                  : m_direction == Direction::ANTI_CLOCKWISE ? "anti-clockwise"
+                  : m_direction == Direction::STABLE         ? "stable"
+                                                             : "unknown");
+            ofs << std::endl;
+            ofs.close();
+            MUTEX.unlock();
+
+
+#endif
         }
+        // m_direction=Direction::STABLE;
     }
+    // m_direction=Direction::STABLE;
 #if CONSOLE_OUTPUT >= 2
     MUTEX.lock();
+    out_cnt++;
     std::cout << "direction: "
               << (m_direction == Direction::CLOCKWISE        ? "clockwise"
                   : m_direction == Direction::ANTI_CLOCKWISE ? "anti-clockwise"
