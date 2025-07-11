@@ -1,0 +1,15 @@
+std_msgs/Header header
+bool tracking
+bool detecting
+bool iffire
+string id
+int32 armors_num
+geometry_msgs/Point position
+float32 pre_pitch
+float32 pre_yaw
+float32 fire
+float32 distance
+float32 r
+float32 armor_yaw_offset
+float32 v_horizon
+float32 aim_factor

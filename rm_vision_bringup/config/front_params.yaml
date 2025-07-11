@@ -1,0 +1,58 @@
+/front/camera_node:
+  ros__parameters:
+    frame_id: front_camera_optical_frame
+    name: galaxy_camera
+    camera_info_package: front_resource
+    use_sensor_data_qos: true
+    exposure_time: 1850  # 1850
+    gain: 18.0  # 18.0
+
+/front/armor_detector:
+  ros__parameters:
+    debug: true
+    light:
+      detect_color: 0
+      thres:
+        red: 100
+        blue: 100
+      min_ratio: 0.08
+      max_ratio: 0.6
+    armor:
+      min_light_ratio: 0.55  #0.8
+    classifier:
+      rgb_coefficient:
+        red: [0.0, 1.5, 1.5]
+        blue: [1.5, 1.5, 0.0]
+      blur_range: 3
+      model_package: front_resource
+      threshold: 0.8
+    ignore_classes: ["negative", "outpost"]
+
+/front/armor_tracker:
+  ros__parameters:
+    frame_id: base_frame
+    max_armor_distance: 10.0
+    ekf:
+      sigma2_q_xyz_max: 0.06
+      sigma2_q_xyz_min: 0.03
+      sigma2_q_yaw_max: 10.0
+      sigma2_q_yaw_min: 5.0
+      sigma2_q_r: 80.0
+      r_xyz_factor: 5e-5  # 5e-5
+      r_yaw: 6e-3  # 6e-3
+    tracker:
+      max_match_distance: 0.5
+      max_match_yaw_diff: 1.0
+      tracking_thres: 1
+      lost_time_thres: 0.6
+      spinning_diff: 0.08
+    trajectory:
+      bullet_offset_x: 0.07
+      bullet_offset_pitch: +1.0
+      bullet_offset_yaw: 0.0  #+0.5
+      bullet_speed: 23.2
+      algorithm_time: 0.10
+      control_time: 0.0575
+    aim_threshold:
+      armor: 1.5
+      center: 3.0

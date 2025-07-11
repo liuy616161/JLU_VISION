@@ -1,0 +1,36 @@
+/back/camera_node:
+  ros__parameters:
+    frame_id: back_camera_optical_frame
+    name: "v4l2_camera"
+    camera_info_package: back_resource
+    use_sensor_data_qos: true
+    index: 0
+    exposure: 50
+    brightness: 64
+    width: 1920
+    height: 1080
+
+/back/armor_detector:
+  ros__parameters:
+    debug: true
+    light:
+      detect_color: 1
+      thres:  # 70
+        red: 100
+        blue: 140
+      min_ratio: 0.08  # 0.1
+      max_ratio: 1.0
+    armor:
+      min_light_ratio: 0.55  # 0.8
+    classifier:
+      rgb_coefficient:
+        red: [0.0, 1.5, 1.5]
+        blue: [3.0, 0.0, 0.0]
+      blur_range: 1
+      model_package: back_resource
+      threshold: 0.8
+    ignore_classes: ["negative", "outpost"]
+
+/back/armor_targeter:
+  ros__parameters:
+    frame_id: gimbal_link

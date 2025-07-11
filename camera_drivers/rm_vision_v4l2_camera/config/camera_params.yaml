@@ -1,0 +1,11 @@
+/v4l2_camera:
+  ros__parameters:
+    name: "v4l2_camera"
+    frame_id: "camera_optical_frame"
+    camera_info_package: back_resource
+    index: 0
+    exposure: 200
+    brightness: 48
+    width: 1920
+    height: 1080
+    use_sensor_data_qos: true

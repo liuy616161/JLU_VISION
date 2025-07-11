@@ -1,0 +1,10 @@
+/serial_driver:
+  ros__parameters:
+    timestamp_offset: 0.01
+    device_name: /dev/ttyACM0
+    baud_rate: 115200
+    flow_control: none
+    parity: none
+    stop_bits: "1"
+    self_rotation: 0
+    cmd_vel_topic: cmd_vel_chassis

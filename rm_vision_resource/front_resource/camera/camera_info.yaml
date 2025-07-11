@@ -1,0 +1,26 @@
+image_width: 1440
+image_height: 1080
+camera_name: galaxy_camera
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [1776.6396 ,    0.     ,  713.95491,
+            0.     , 1776.27087,  562.53975,
+            0.     ,    0.     ,    1.     ]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [-0.230847, 0.278512, 0.000957, 0.000400, 0.000000]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1., 0., 0.,
+         0., 1., 0.,
+         0., 0., 1.]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [1718.68921,    0.     ,  713.5452 ,    0.     ,
+            0.     , 1739.51379,  563.33497,    0.     ,
+            0.     ,    0.     ,    1.     ,    0.     ]

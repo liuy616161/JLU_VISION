@@ -1,0 +1,45 @@
+{
+  "configurations": [
+    {
+      "browse": {
+        "databaseFilename": "${default}",
+        "limitSymbolsToIncludedHeaders": false
+      },
+      "includePath": [
+        "/home/eatwhat/ws_livox/install/livox_ros_driver2/include/**",
+        "/home/eatwhat/ws01_decision/install/rm_behavior_tree/include/**",
+        "/home/eatwhat/ws01_decision/install/my_msg_interface/include/**",
+        "/home/eatwhat/ws01_decision/install/global_interfaces/include/**",
+        "/home/eatwhat/ws01_decision/install/btcpp_ros2_interfaces/include/**",
+        "/home/eatwhat/ws01_decision/install/behaviortree_ros2/include/**",
+        "/home/eatwhat/ws01_decision/install/behaviortree_cpp/include/**",
+        "/home/eatwhat/ws01_decision/install/auto_aim_interfaces/include/**",
+        "/home/eatwhat/ws00_sentry/install/pointcloud_to_laserscan/include/**",
+        "/home/eatwhat/ws00_sentry/install/ndt_omp_ros2/include/**",
+        "/home/eatwhat/ws00_sentry/install/my_msg_interface/include/**",
+        "/home/eatwhat/ws00_sentry/install/linefit_ground_segmentation/include/**",
+        "/home/eatwhat/ws00_sentry/install/imu_complementary_filter/include/**",
+        "/home/eatwhat/ws00_sentry/install/icp_localization_ros2/include/**",
+        "/home/eatwhat/ws00_sentry/install/fast_lio/include/**",
+        "/opt/ros/humble/include/**",
+        "/home/eatwhat/ws00_sentry/src/RefereeSystem/src/referee_system/include/**",
+        "/home/eatwhat/ws00_sentry/src/RefereeSystem/src/referee_system_plugin_base/include/**",
+        "/home/eatwhat/ws00_sentry/src/RefereeSystem/src/referee_system_test_client/include/**",
+        "/home/eatwhat/ws00_sentry/src/rm_localization/FAST_LIO_ROS2_ODOMETRY/include/**",
+        "/home/eatwhat/ws00_sentry/src/rm_localization/icp_localization_ros2/include/**",
+        "/home/eatwhat/ws00_sentry/src/rm_localization/lidar_localization_ros2/include/**",
+        "/home/eatwhat/ws00_sentry/src/rm_localization/ndt_omp_ros2/include/**",
+        "/home/eatwhat/ws00_sentry/src/rm_perception/imu_complementary_filter/include/**",
+        "/home/eatwhat/ws00_sentry/src/rm_perception/linefit_ground_segementation_ros2/linefit_ground_segmentation/include/**",
+        "/home/eatwhat/ws00_sentry/src/rm_perception/pointcloud_to_laserscan/include/**",
+        "/usr/include/**"
+      ],
+      "name": "ROS",
+      "intelliSenseMode": "gcc-x64",
+      "compilerPath": "/usr/bin/gcc",
+      "cStandard": "gnu11",
+      "cppStandard": "c++14"
+    }
+  ],
+  "version": 4
+}

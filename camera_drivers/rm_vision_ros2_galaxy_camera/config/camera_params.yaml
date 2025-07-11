@@ -1,0 +1,8 @@
+/galaxy_camera:
+  ros__parameters:
+    name: "galaxy_camera"
+    frame_id: "camera_optical_frame"
+    use_sensor_data_qos: true
+    camera_info_package: front_resource
+    exposure_time: 4000  # 2300
+    gain: 24.0  # 15.0

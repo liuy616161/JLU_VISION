@@ -1,0 +1,26 @@
+image_width: 1920
+image_height: 1080
+camera_name: v4l2_camera
+camera_matrix:
+  rows: 3
+  cols: 3
+  data: [1141.13554,    0.     , 1000.39791,
+            0.     , 1145.53474,  543.6068 ,
+            0.     ,    0.     ,    1.     ]
+distortion_model: plumb_bob
+distortion_coefficients:
+  rows: 1
+  cols: 5
+  data: [0.029424, -0.034836, 0.001240, -0.005431, 0.000000]
+rectification_matrix:
+  rows: 3
+  cols: 3
+  data: [1., 0., 0.,
+         0., 1., 0.,
+         0., 0., 1.]
+projection_matrix:
+  rows: 3
+  cols: 4
+  data: [1145.36401,    0.     ,  987.57261,    0.     ,
+            0.     , 1157.79358,  544.62497,    0.     ,
+            0.     ,    0.     ,    1.     ,    0.     ]
